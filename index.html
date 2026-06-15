@@ -62,6 +62,15 @@ body{
 .modal-box .switch a{cursor:pointer;color:#c0b8d8;text-decoration:underline}
 .modal-box .error{color:#d07a7a;font-size:.75rem;margin-bottom:.4rem;text-align:center;display:none}
 @media(max-width:480px){.logo{font-size:2.2rem}.features{grid-template-columns:repeat(2,1fr)}}
+.act-item{display:flex;align-items:flex-start;gap:.6rem;padding:.4rem 0;border-bottom:1px solid rgba(72,64,112,.2);font-size:.8rem;line-height:1.4}
+.act-item:last-child{border-bottom:none}
+.act-icon{font-size:1rem;flex-shrink:0;margin-top:.1rem}
+.act-body{flex:1;min-width:0}
+.act-title{color:#e0dcf0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.act-title a{color:#c0b8e0;text-decoration:none}
+.act-title a:hover{color:#e0dcf0}
+.act-meta{font-size:.68rem;color:#7a7498;margin-top:.05rem}
+.act-meta .un{color:#80a0c8}
 .uc{position:fixed;z-index:999;background:rgba(40,34,62,.96);border:1px solid #585090;border-radius:12px;padding:1.2rem;min-width:150px;text-align:center;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none}
 .uc.s{opacity:1;visibility:visible}
 .uc .p{width:80px;height:80px;border-radius:50%;margin:0 auto .6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#e4e0f0;overflow:hidden;background:rgba(75,65,130,.55)}
@@ -152,6 +161,12 @@ body{
       <span style="color:#d0a870;font-weight:500;font-size:1rem">腐竹：</span>
       <span style="color:#e0dcf0;font-size:1rem;font-weight:400">ZjwOo</span>
     </div>
+  </div>
+
+  <div class="card" id="activityCard" style="display:none">
+    <h2>✦ 最新动态 ✦</h2>
+    <div style="text-align:left" id="activityFeed"></div>
+    <div style="text-align:center;margin-top:.5rem"><a href="/activity" style="color:#6ab8ff;font-size:.78rem;text-decoration:none">查看全部活动 →</a></div>
   </div>
 
   <div class="footer">NewWorld Minecraft Server · All rights reserved</div>
@@ -348,9 +363,44 @@ async function fetchStatus() {
   } catch(e) { document.getElementById('statusText').textContent = '查询失败'; }
 }
 
+const ACT_ICONS = {post:'📢', reply:'💬', tech:'🔬', user:'👤'};
+const TECH_LABELS = {pending:'⏳', approved:'✅', rejected:'❌'};
+
+async function loadActivity() {
+  try {
+    const r = await fetch('/api/activity');
+    const d = await r.json();
+    if (!d.ok || !d.activity || d.activity.length === 0) return;
+    document.getElementById('activityCard').style.display = 'block';
+    document.getElementById('activityFeed').innerHTML = d.activity.slice(0, 8).map(a => {
+      let title = '', link = '';
+      if (a.type === 'post') { title = '发布了新帖《<a href="/forum" onclick="event.stopPropagation();viewPostFromHome(' + a.id + ')">' + esc(a.title) + '</a>》'; }
+      else if (a.type === 'reply') { title = '回复了帖子《<a href="/forum" onclick="event.stopPropagation();viewPostFromHome(' + a.post_id + ')">' + esc(a.title) + '</a>》'; }
+      else if (a.type === 'tech') { title = '提交了科技 <strong>' + esc(a.tech_key) + '</strong> ' + (TECH_LABELS[a.status] || ''); }
+      else if (a.type === 'user') { title = '注册了账号'; }
+      return '<div class="act-item"><span class="act-icon">' + (ACT_ICONS[a.type] || '📌') + '</span><div class="act-body"><div class="act-title">' + title + '</div><div class="act-meta"><span class="un" data-u="' + esc(a.username) + '" style="cursor:pointer">' + esc(a.username) + '</span> · ' + fmtTimeAgo(a.time) + '</div></div></div>';
+    }).join('');
+  } catch(e) {}
+}
+
+function viewPostFromHome(id) { localStorage.setItem('viewPost', id); }
+
+function fmtTimeAgo(t) {
+  if (!t) return '';
+  const s = Math.floor((Date.now() - new Date(t.replace(' ','T')+'+08:00').getTime()) / 1000);
+  if (s < 60) return '刚刚';
+  if (s < 3600) return Math.floor(s / 60) + ' 分钟前';
+  if (s < 86400) return Math.floor(s / 3600) + ' 小时前';
+  return Math.floor(s / 86400) + ' 天前';
+}
+
+function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 checkAuth();
 fetchStatus();
 setInterval(fetchStatus, 30000);
+loadActivity();
+setInterval(loadActivity, 60000);
 (function(){var c,t;document.addEventListener('mouseover',function(e){var a=e.target.closest('[data-u]');if(!a||a.dataset.t)return;var u=a.dataset.u;a.dataset.t=setTimeout(function(){if(!c){c=document.createElement('div');c.className='uc';c.innerHTML='<div class="p"></div><div class="n"></div><div class="r"></div>';document.body.appendChild(c)}var r=a.getBoundingClientRect(),p=c.querySelector('.p'),n=c.querySelector('.n'),l=c.querySelector('.r');p.innerHTML='';var i=a.querySelector('img');if(i)p.appendChild(i.cloneNode());else p.textContent=u.charAt(0).toUpperCase();n.textContent=u;l.textContent=a.dataset.r||'用户';c.classList.add('s');var x=r.left+r.width/2-75,y=r.top-c.offsetHeight-10;if(y<10)y=r.bottom+10;c.style.left=Math.max(5,x)+'px';c.style.top=y+'px'},1000)}),document.addEventListener('mouseout',function(e){var a=e.target.closest('[data-u]');if(!a)return;if(a.dataset.t){clearTimeout(parseInt(a.dataset.t));delete a.dataset.t}if(c)c.classList.remove('s')})})();
 document.addEventListener('click',function(e){var a=e.target.closest('[data-u]');if(a&&!a.closest('.uc')){e.stopPropagation();if(a.dataset.u)window.location.href='/user?username='+encodeURIComponent(a.dataset.u)}});
 </script>

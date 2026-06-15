@@ -18,7 +18,8 @@ body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;backgroun
 .tab{padding:.35rem 1.1rem;border-radius:999px;font-size:.8rem;cursor:pointer;border:1px solid #484070;background:transparent;color:#b0a8d0;transition:.2s}
 .tab:hover{border-color:#6a6298;background:rgba(90,70,160,.15)}
 .tab.active{background:rgba(75,65,130,.55);color:#e4e0f0;border-color:#686098}
-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -.3rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem;min-width:500px}
 th,td{text-align:left;padding:.5rem .4rem;border-bottom:1px solid #363058}
 th{color:#8a84a8;font-weight:500;font-size:.78rem}
 td{color:#d0cce4}
@@ -30,6 +31,7 @@ td{color:#d0cce4}
 .btn-primary:hover{background:rgba(85,75,150,.65)}
 .btn-danger{background:rgba(130,50,50,.5);color:#e0d0d0}
 .btn-danger:hover{background:rgba(150,60,60,.6)}
+@media(max-width:480px){body{padding:1rem}}
 .btn-ghost{background:transparent;border:1px solid #4e4880;color:#b0a8d0}
 .btn-ghost:hover{background:rgba(90,70,160,.15)}
 .empty{text-align:center;color:#8a84a8;padding:1.5rem;font-size:.8rem}
@@ -136,7 +138,7 @@ async function loadUsers() {
     if (!d.ok || !d.users) { document.getElementById('userList').innerHTML = '<div class="empty">无权访问</div>'; return; }
     if (d.users.length === 0) { document.getElementById('userList').innerHTML = '<div class="empty">暂无用户</div>'; return; }
     document.getElementById('userList').innerHTML =
-      '<table><thead><tr><th>ID</th><th>用户名</th><th>MC ID</th><th>权限</th><th>注册时间</th><th>操作</th></tr></thead><tbody>' +
+      '<div class="tbl-wrap"><table><thead><tr><th>ID</th><th>用户名</th><th>MC ID</th><th>权限</th><th>注册时间</th><th>操作</th></tr></thead><tbody>' +
       d.users.map(u =>
         '<tr>' +
           '<td>' + u.id + '</td>' +
@@ -146,7 +148,7 @@ async function loadUsers() {
           '<td>' + u.created_at + '</td>' +
           '<td><span class="action-link" onclick="showMessageForm(' + u.id + ',\'' + u.username + '\')">📨 发消息</span></td>' +
         '</tr>'
-      ).join('') + '</tbody></table>';
+      ).join('') + '</tbody></table></div>';
   } catch(e) { document.getElementById('userList').innerHTML = '<div class="empty">加载失败</div>'; }
 }
 
@@ -157,7 +159,7 @@ async function loadAdminPosts() {
     if (!d.ok || !d.posts) { document.getElementById('adminPostList').innerHTML = '<div class="empty">无权访问</div>'; return; }
     if (d.posts.length === 0) { document.getElementById('adminPostList').innerHTML = '<div class="empty">暂无帖子</div>'; return; }
     document.getElementById('adminPostList').innerHTML =
-      '<table><thead><tr><th>ID</th><th>标题</th><th>作者</th><th>分类</th><th>回复</th><th>时间</th><th>操作</th></tr></thead><tbody>' +
+      '<div class="tbl-wrap"><table><thead><tr><th>ID</th><th>标题</th><th>作者</th><th>分类</th><th>回复</th><th>时间</th><th>操作</th></tr></thead><tbody>' +
       d.posts.map(p =>
         '<tr>' +
           '<td>' + p.id + '</td>' +
@@ -171,7 +173,7 @@ async function loadAdminPosts() {
             ' <span class="action-link" style="color:#ff7a7a" onclick="deletePostAdmin(' + p.id + ')">删除</span>' +
           '</td>' +
         '</tr>'
-      ).join('') + '</tbody></table>';
+      ).join('') + '</tbody></table></div>';
   } catch(e) { document.getElementById('adminPostList').innerHTML = '<div class="empty">加载失败</div>'; }
 }
 

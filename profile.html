@@ -83,6 +83,10 @@ input:focus{border-color:#6a6298}
         <span class="value" id="pCreatedAt">-</span>
       </div>
       <div class="row">
+        <span class="label">邮箱</span>
+        <span class="value"><span id="pEmail" style="color:#888;font-size:.8rem">-</span> <a onclick="showBindEmail()" style="cursor:pointer;color:#6ab8ff;font-size:.8rem;text-decoration:underline">修改</a></span>
+      </div>
+      <div class="row">
         <span class="label">密码</span>
         <span class="value"><a onclick="showChangePw()" style="cursor:pointer;color:#6ab8ff;text-decoration:underline;font-size:.85rem">修改密码</a></span>
       </div>
@@ -120,6 +124,7 @@ async function loadProfile() {
     $('userDisplay').textContent = u.username;
     $('pUsername').textContent = u.username;
     $('pMinecraftId').textContent = u.minecraft_id || '未绑定';
+    $('pEmail').textContent = u.email || '未设置';
     const roleMap = {'user': '用户', 'admin': '管理员'};
     $('pRole').textContent = roleMap[u.role] || u.role;
     $('pCreatedAt').textContent = u.created_at || '-';
@@ -216,6 +221,30 @@ async function bindMc() {
       $('pMinecraftId').textContent = mcId;
       $('extra').innerHTML = '<div class="success">绑定成功</div>';
     } else { err.textContent = d.error; err.style.display = 'block'; }
+  } catch(e) { err.textContent = '网络错误'; err.style.display = 'block'; }
+}
+
+function showBindEmail() {
+  const extra = $('extra');
+  extra.style.display = 'block';
+  const currentEmail = ($('pEmail').textContent === '未设置' ? '' : $('pEmail').textContent);
+  extra.innerHTML = `
+    <div style="font-size:.85rem;color:#ddd8ff;margin-bottom:.6rem">修改邮箱</div>
+    <input id="newEmail" type="email" placeholder="输入新邮箱地址" value="` + currentEmail + `">
+    <div id="emailError" class="error"></div>
+    <button class="btn btn-primary" onclick="bindEmail()">确认修改</button>
+    <button class="btn btn-warn" onclick="cancelExtra()" style="margin-left:.5rem">取消</button>
+  `;
+}
+
+async function bindEmail() {
+  const email = $('newEmail').value.trim();
+  const err = $('emailError');
+  try {
+    const r = await fetch('/api/update_profile', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({email})});
+    const d = await r.json();
+    if (d.ok) { $('pEmail').textContent = email || '未设置'; $('extra').innerHTML = '<div class="success">邮箱已更新</div>'; }
+    else { err.textContent = d.error; err.style.display = 'block'; }
   } catch(e) { err.textContent = '网络错误'; err.style.display = 'block'; }
 }
 

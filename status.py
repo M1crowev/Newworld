@@ -773,6 +773,22 @@ class Handler(BaseHTTPRequestHandler):
             json_response(self, {"ok": True, "messages": [{"id": r[0], "content": r[1], "is_read": r[2], "created_at": r[3]} for r in rows]})
             return
 
+        if self.path == "/api/activity":
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("SELECT 'post', id, title, author_name, created_at FROM forum_posts ORDER BY created_at DESC LIMIT 15")
+            posts = [{"type": "post", "id": r[1], "title": r[2], "username": r[3], "time": r[4]} for r in c.fetchall()]
+            c.execute("SELECT 'reply', fr.id, fp.title, fr.author_name, fr.created_at, fp.id FROM forum_replies fr JOIN forum_posts fp ON fr.post_id = fp.id ORDER BY fr.created_at DESC LIMIT 15")
+            replies = [{"type": "reply", "id": r[1], "title": r[2], "username": r[3], "time": r[4], "post_id": r[5]} for r in c.fetchall()]
+            c.execute("SELECT 'tech', id, tech_key, username, status, created_at FROM tech_submissions ORDER BY created_at DESC LIMIT 15")
+            tech = [{"type": "tech", "id": r[1], "tech_key": r[2], "username": r[3], "status": r[4], "time": r[5]} for r in c.fetchall()]
+            c.execute("SELECT 'user', id, username, created_at FROM users ORDER BY created_at DESC LIMIT 10")
+            users = [{"type": "user", "id": r[1], "username": r[2], "time": r[3]} for r in c.fetchall()]
+            conn.close()
+            all_activity = sorted(posts + replies + tech + users, key=lambda x: x["time"], reverse=True)[:50]
+            json_response(self, {"ok": True, "activity": all_activity})
+            return
+
         if self.path.startswith("/api/forum/posts"):
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()

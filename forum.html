@@ -95,7 +95,7 @@ body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;backgroun
 .action-link{cursor:pointer;color:#80a0c8;font-size:.78rem;text-decoration:underline}
 .action-link:hover{color:#a0c0e0}
 .action-link.danger{color:#d07a7a}
-@media(max-width:480px){.post-item{padding:1rem}.overlay-content{padding:1.2rem}.cat-tabs{gap:.3rem}.cat-tab{padding:.3rem .7rem;font-size:.75rem}}
+@media(max-width:480px){body{padding:1rem}.post-item{padding:.8rem}.overlay-content{padding:1rem}.cat-tabs{gap:.3rem}.cat-tab{padding:.3rem .7rem;font-size:.75rem}.post-avatar{width:36px;height:36px;font-size:.9rem}}
 .uc{position:fixed;z-index:999;background:rgba(40,34,62,.96);border:1px solid #585090;border-radius:12px;padding:1.2rem;min-width:150px;text-align:center;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none}
 .uc.s{opacity:1;visibility:visible}
 .uc .p{width:80px;height:80px;border-radius:50%;margin:0 auto .6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#e4e0f0;overflow:hidden;background:rgba(75,65,130,.55)}
@@ -486,6 +486,7 @@ async function uploadImage(file, targetId) {
 checkAuth();
 renderCatTabs();
 loadPosts();
+(function(){var pid=localStorage.getItem('viewPost');if(pid){localStorage.removeItem('viewPost');setTimeout(function(){viewPost(parseInt(pid))},500)}})();
 (function(){var c,t;document.addEventListener('mouseover',function(e){var a=e.target.closest('[data-u]');if(!a||a.dataset.t)return;var u=a.dataset.u;a.dataset.t=setTimeout(function(){if(!c){c=document.createElement('div');c.className='uc';c.innerHTML='<div class="p"></div><div class="n"></div><div class="r"></div>';document.body.appendChild(c)}var r=a.getBoundingClientRect(),p=c.querySelector('.p'),n=c.querySelector('.n'),l=c.querySelector('.r');p.innerHTML='';var i=a.querySelector('img');if(i)p.appendChild(i.cloneNode());else p.textContent=u.charAt(0).toUpperCase();n.textContent=u;l.textContent=a.dataset.r||'用户';c.classList.add('s');var x=r.left+r.width/2-75,y=r.top-c.offsetHeight-10;if(y<10)y=r.bottom+10;c.style.left=Math.max(5,x)+'px';c.style.top=y+'px'},1000)}),document.addEventListener('mouseout',function(e){var a=e.target.closest('[data-u]');if(!a)return;if(a.dataset.t){clearTimeout(parseInt(a.dataset.t));delete a.dataset.t}if(c)c.classList.remove('s')})})();
 document.addEventListener('click',function(e){var a=e.target.closest('[data-u]');if(a&&!a.closest('.uc')){e.stopPropagation();if(a.dataset.u)window.location.href='/user?username='+encodeURIComponent(a.dataset.u)}});
 </script>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>动态 - NewWorld</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#2f2a48;color:#e4e0f0;min-height:100vh;background-image:radial-gradient(ellipse at 40% 15%,rgba(120,100,200,.12) 0%,transparent 55%),radial-gradient(ellipse at 60% 85%,rgba(90,110,190,.08) 0%,transparent 50%);padding:2rem}
+.container{max-width:700px;margin:0 auto}
+.top-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1.2rem}
+.top-bar h1{font-size:1.3rem;color:#e4e0f0;letter-spacing:1px}
+.top-bar a{color:#b0a8d0;text-decoration:none;font-size:.85rem;padding:.3rem .8rem;border:1px solid #4e4880;border-radius:6px;transition:.2s}
+.top-bar a:hover{background:rgba(90,70,160,.15)}
+.card{background:rgba(42,36,64,.6);border:1px solid #484070;border-radius:14px;padding:1.3rem;backdrop-filter:blur(10px);margin-bottom:1.4rem;box-shadow:0 2px 24px rgba(0,0,0,.18)}
+.card h2{font-size:1rem;margin-bottom:.8rem;color:#c0b8d8;font-weight:400;letter-spacing:1px}
+.act-item{display:flex;align-items:flex-start;gap:.65rem;padding:.55rem 0;border-bottom:1px solid rgba(72,64,112,.18);font-size:.85rem;line-height:1.45}
+.act-item:last-child{border-bottom:none}
+.act-icon{font-size:1.1rem;flex-shrink:0;margin-top:.1rem;width:24px;text-align:center}
+.act-body{flex:1;min-width:0}
+.act-title{color:#e0dcf0}
+.act-title a{color:#c0b8e0;text-decoration:none}
+.act-title a:hover{color:#e0dcf0}
+.act-meta{font-size:.7rem;color:#7a7498;margin-top:.1rem}
+.act-meta .un{color:#80a0c8;cursor:pointer}
+.act-meta .un:hover{color:#a0c0e0;text-decoration:underline}
+.empty{text-align:center;color:#8a84a8;padding:1.5rem;font-size:.82rem}
+.tabs{display:flex;gap:.4rem;margin-bottom:.8rem;flex-wrap:wrap}
+.tab{padding:.3rem 1rem;border-radius:999px;font-size:.78rem;cursor:pointer;border:1px solid #484070;background:transparent;color:#b0a8d0;transition:.2s}
+.tab:hover{border-color:#6a6298;background:rgba(90,70,160,.15)}
+.tab.active{background:rgba(75,65,130,.55);color:#e4e0f0;border-color:#686098}
+@media(max-width:480px){body{padding:1rem}}
+.uc{position:fixed;z-index:999;background:rgba(40,34,62,.96);border:1px solid #585090;border-radius:12px;padding:1.2rem;min-width:150px;text-align:center;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none}
+.uc.s{opacity:1;visibility:visible}
+.uc .p{width:80px;height:80px;border-radius:50%;margin:0 auto .6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#e4e0f0;overflow:hidden;background:rgba(75,65,130,.55)}
+.uc .p img{width:100%;height:100%;object-fit:cover}
+.uc .n{font-size:.9rem;color:#e0dcf0;font-weight:600}
+.uc .r{font-size:.7rem;color:#8a84a8;margin-top:.15rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <h1>📊 全服动态</h1>
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <a href="/forum">论坛</a>
+      <a href="/">首页</a>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('all',this)">📌 全部</button>
+    <button class="tab" onclick="switchTab('post',this)">📢 帖子</button>
+    <button class="tab" onclick="switchTab('reply',this)">💬 回复</button>
+    <button class="tab" onclick="switchTab('tech',this)">🔬 科技</button>
+    <button class="tab" onclick="switchTab('user',this)">👤 新玩家</button>
+  </div>
+
+  <div class="card">
+    <div id="activityList"><div class="empty">加载中...</div></div>
+  </div>
+</div>
+
+<script>
+const ACT_ICONS = {post:'📢', reply:'💬', tech:'🔬', user:'👤'};
+const TECH_LABELS = {pending:'⏳ 待审核', approved:'✅ 已通过', rejected:'❌ 未通过'};
+let allData = [];
+let currentFilter = 'all';
+
+async function loadActivity() {
+  try {
+    const r = await fetch('/api/activity');
+    const d = await r.json();
+    if (!d.ok) { document.getElementById('activityList').innerHTML = '<div class="empty">加载失败</div>'; return; }
+    allData = d.activity || [];
+    render();
+  } catch(e) { document.getElementById('activityList').innerHTML = '<div class="empty">加载失败</div>'; }
+}
+
+function render() {
+  const filtered = currentFilter === 'all' ? allData : allData.filter(a => a.type === currentFilter);
+  const el = document.getElementById('activityList');
+  if (filtered.length === 0) { el.innerHTML = '<div class="empty">暂无动态</div>'; return; }
+  el.innerHTML = filtered.map(a => {
+    let icon = ACT_ICONS[a.type] || '📌';
+    let title = '';
+    if (a.type === 'post') title = '发布了新帖 <a href="/forum" onclick="event.stopPropagation();openPost(' + a.id + ')">《' + esc(a.title) + '》</a>';
+    else if (a.type === 'reply') title = '回复了帖子 <a href="/forum" onclick="event.stopPropagation();openPost(' + a.post_id + ')">《' + esc(a.title) + '》</a>';
+    else if (a.type === 'tech') title = '提交了科技 <strong>' + esc(a.tech_key) + '</strong> ' + (TECH_LABELS[a.status] || a.status);
+    else if (a.type === 'user') title = '注册了账号';
+    return '<div class="act-item"><span class="act-icon">' + icon + '</span><div class="act-body"><div class="act-title">' + title + '</div><div class="act-meta"><span class="un" data-u="' + esc(a.username) + '">' + esc(a.username) + '</span> · ' + fmtTimeAgo(a.time) + '</div></div></div>';
+  }).join('');
+}
+
+function openPost(id) { localStorage.setItem('viewPost', id); window.location.href = '/forum'; }
+
+function fmtTimeAgo(t) {
+  if (!t) return '';
+  const s = Math.floor((Date.now() - new Date(t.replace(' ','T')+'+08:00').getTime()) / 1000);
+  if (s < 60) return '刚刚';
+  if (s < 3600) return Math.floor(s / 60) + ' 分钟前';
+  if (s < 86400) return Math.floor(s / 3600) + ' 小时前';
+  return Math.floor(s / 86400) + ' 天前';
+}
+
+function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function switchTab(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+loadActivity();
+setInterval(loadActivity, 60000);
+(function(){var c,t;document.addEventListener('mouseover',function(e){var a=e.target.closest('[data-u]');if(!a||a.dataset.t)return;var u=a.dataset.u;a.dataset.t=setTimeout(function(){if(!c){c=document.createElement('div');c.className='uc';c.innerHTML='<div class="p"></div><div class="n"></div><div class="r"></div>';document.body.appendChild(c)}var r=a.getBoundingClientRect(),p=c.querySelector('.p'),n=c.querySelector('.n'),l=c.querySelector('.r');p.innerHTML='';var i=a.querySelector('img');if(i)p.appendChild(i.cloneNode());else p.textContent=u.charAt(0).toUpperCase();n.textContent=u;l.textContent=a.dataset.r||'用户';c.classList.add('s');var x=r.left+r.width/2-75,y=r.top-c.offsetHeight-10;if(y<10)y=r.bottom+10;c.style.left=Math.max(5,x)+'px';c.style.top=y+'px'},1000)}),document.addEventListener('mouseout',function(e){var a=e.target.closest('[data-u]');if(!a)return;if(a.dataset.t){clearTimeout(parseInt(a.dataset.t));delete a.dataset.t}if(c)c.classList.remove('s')})})();
+document.addEventListener('click',function(e){var a=e.target.closest('[data-u]');if(a&&!a.closest('.uc')){e.stopPropagation();if(a.dataset.u)window.location.href='/user?username='+encodeURIComponent(a.dataset.u)}});
+</script>
+</body>
+</html>
