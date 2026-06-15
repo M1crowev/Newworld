@@ -967,28 +967,62 @@ class Handler(BaseHTTPRequestHandler):
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
 
-            c.execute("SELECT ps.username, ps.playtime_seconds, ps.first_seen, ps.last_seen, u.avatar FROM player_stats ps LEFT JOIN users u ON ps.username = u.username ORDER BY ps.playtime_seconds DESC LIMIT 50")
-            playtime = [{"username": r[0], "playtime_seconds": r[1], "first_seen": r[2], "last_seen": r[3], "avatar": r[4] or ""} for r in c.fetchall()]
+            uuid_map = {}
+            try:
+                with open(USERCACHE) as f:
+                    for e in json.load(f):
+                        uuid_map[e["uuid"]] = e["name"]
+            except Exception:
+                pass
+
+            playtime = []
+            stats_dir = "/root/NewWorldDevelopmentCommittee/world/stats/"
+            try:
+                for fname in os.listdir(stats_dir):
+                    if not fname.endswith(".json"):
+                        continue
+                    uuid = fname[:-5]
+                    username = uuid_map.get(uuid)
+                    if not username:
+                        continue
+                    try:
+                        with open(os.path.join(stats_dir, fname)) as f:
+                            raw = json.load(f)
+                        play_ticks = raw.get("stats", {}).get("minecraft:custom", {}).get("minecraft:play_time", 0)
+                        play_seconds = play_ticks // 20
+                        playtime.append({"username": username, "playtime_seconds": play_seconds})
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            playtime.sort(key=lambda x: -x["playtime_seconds"])
+            playtime = playtime[:50]
+
+            if playtime:
+                names = [p["username"] for p in playtime]
+                placeholders = ",".join("?" for _ in names)
+                c.execute("SELECT username, avatar FROM users WHERE username IN (" + placeholders + ")", names)
+                avatars = {r[0]: r[1] or "" for r in c.fetchall()}
+                for p in playtime:
+                    p["avatar"] = avatars.get(p["username"], "")
 
             c.execute("SELECT author_name, COUNT(*) as cnt FROM forum_posts GROUP BY author_name ORDER BY cnt DESC LIMIT 50")
             post_counts = {r[0]: r[1] for r in c.fetchall()}
             c.execute("SELECT author_name, COUNT(*) as cnt FROM forum_replies GROUP BY author_name ORDER BY cnt DESC LIMIT 50")
             reply_counts = {r[0]: r[1] for r in c.fetchall()}
             all_forum_users = set(list(post_counts.keys()) + list(reply_counts.keys()))
-            avatars = {}
+            avatars_f = {}
             if all_forum_users:
                 placeholders = ",".join("?" for _ in all_forum_users)
                 c.execute("SELECT username, avatar FROM users WHERE username IN (" + placeholders + ")", list(all_forum_users))
-                avatars = {r[0]: r[1] or "" for r in c.fetchall()}
-            forum = sorted([{"username": u, "posts": post_counts.get(u, 0), "replies": reply_counts.get(u, 0), "total": post_counts.get(u, 0) + reply_counts.get(u, 0), "avatar": avatars.get(u, "")} for u in all_forum_users], key=lambda x: -x["total"])[:50]
+                avatars_f = {r[0]: r[1] or "" for r in c.fetchall()}
+            forum = sorted([{"username": u, "posts": post_counts.get(u, 0), "replies": reply_counts.get(u, 0), "total": post_counts.get(u, 0) + reply_counts.get(u, 0), "avatar": avatars_f.get(u, "")} for u in all_forum_users], key=lambda x: -x["total"])[:50]
 
-            usercache_path = USERCACHE
             first_joined = []
             try:
-                if os.path.exists(usercache_path):
-                    with open(usercache_path) as f:
-                        data = json.load(f)
-                    first_joined = [{"username": e["name"]} for e in data]
+                with open(USERCACHE) as f:
+                    data = json.load(f)
+                first_joined = [{"username": e["name"]} for e in data]
             except Exception:
                 pass
 
