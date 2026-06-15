@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理后台 - NewWorld</title>
+<link rel="stylesheet" href="/common.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#2f2a48;color:#e4e0f0;min-height:100vh;background-image:radial-gradient(ellipse at 40% 15%,rgba(120,100,200,.12) 0%,transparent 55%),radial-gradient(ellipse at 60% 85%,rgba(90,110,190,.08) 0%,transparent 50%);padding:2rem}
@@ -70,6 +71,7 @@ td{color:#d0cce4}
       <span id="adminUser" style="font-size:.8rem;color:#c8e0c8"></span>
       <a href="/forum">← 论坛</a>
       <a href="/">← 首页</a>
+      <span class="theme-switcher-wrap"></span>
     </div>
   </div>
 
@@ -112,6 +114,7 @@ td{color:#d0cce4}
       <button class="btn btn-ghost" onclick="closeModal()">取消</button>
     </div>
   </div>
+<button class="back-top" id="backTop">↑</button>
 </div>
 
 <script>
@@ -235,7 +238,7 @@ async function loadTechSubmissions() {
     if (d.submissions.length === 0) { el.innerHTML = '<div class="empty">🎉 暂无待审核的提交</div>'; return; }
     el.innerHTML = d.submissions.map(s => {
       const imgs = s.images && s.images.length > 0
-        ? '<div class="i">' + s.images.map(u => '<img src="' + u + '" onclick="window.open(this.src)">').join('') + '</div>' : '';
+        ? '<div class="i">' + s.images.map(u => '<img src="' + u + '" class="lightbox-trigger">').join('') + '</div>' : '';
       return '<div class="tech-sub">' +
         '<div class="h"><span class="author">' + esc(s.username) + '</span>提交了 <span class="tech">' + esc(s.tech_key) + '</span><span class="time">' + s.created_at + '</span></div>' +
         (s.description ? '<div class="b">' + esc(s.description) + '</div>' : '') +
@@ -256,8 +259,10 @@ async function reviewTechSub(id, status) {
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 checkAdmin();
+initTheme(); initBackTop(); initLightbox();
 (function(){var c,t;document.addEventListener('mouseover',function(e){var a=e.target.closest('[data-u]');if(!a||a.dataset.t)return;var u=a.dataset.u;a.dataset.t=setTimeout(function(){if(!c){c=document.createElement('div');c.className='uc';c.innerHTML='<div class="p"></div><div class="n"></div><div class="r"></div>';document.body.appendChild(c)}var r=a.getBoundingClientRect(),p=c.querySelector('.p'),n=c.querySelector('.n'),l=c.querySelector('.r');p.innerHTML='';var i=a.querySelector('img');if(i)p.appendChild(i.cloneNode());else p.textContent=u.charAt(0).toUpperCase();n.textContent=u;l.textContent=a.dataset.r||'用户';c.classList.add('s');var x=r.left+r.width/2-75,y=r.top-c.offsetHeight-10;if(y<10)y=r.bottom+10;c.style.left=Math.max(5,x)+'px';c.style.top=y+'px'},1000)}),document.addEventListener('mouseout',function(e){var a=e.target.closest('[data-u]');if(!a)return;if(a.dataset.t){clearTimeout(parseInt(a.dataset.t));delete a.dataset.t}if(c)c.classList.remove('s')})})();
 document.addEventListener('click',function(e){var a=e.target.closest('[data-u]');if(a&&!a.closest('.uc')){e.stopPropagation();if(a.dataset.u)window.location.href='/user?username='+encodeURIComponent(a.dataset.u)}});
 </script>
+<script src="/common.js"></script>
 </body>
 </html>

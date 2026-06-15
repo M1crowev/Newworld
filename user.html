@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>用户 - NewWorld</title>
+<link rel="stylesheet" href="/common.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#2f2a48;color:#e4e0f0;min-height:100vh;background-image:radial-gradient(ellipse at 40% 15%,rgba(120,100,200,.12) 0%,transparent 55%),radial-gradient(ellipse at 60% 85%,rgba(90,110,190,.08) 0%,transparent 50%);padding:2rem}
@@ -33,6 +34,7 @@ body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;backgroun
   <div class="top-bar">
     <span id="userDisplay" style="color:#c8e0c8;font-size:1.4rem;font-weight:600"></span>
     <a href="javascript:history.back()">← 返回</a>
+      <span class="theme-switcher-wrap"></span>
   </div>
 
   <div class="card">
@@ -77,6 +79,7 @@ body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;backgroun
       <div id="badgeRow" style="display:none;padding:.5rem 0;border-top:1px solid #3e3860;margin-top:.5rem;text-align:center"></div>
     </div>
   </div>
+  <button class="back-top" id="backTop">↑</button>
 </div>
 
 <script>
@@ -143,6 +146,8 @@ async function loadBadges(username) {
 }
 
 loadUser();
+initTheme(); initBackTop(); initLightbox();
 </script>
+<script src="/common.js"></script>
 </body>
 </html>
