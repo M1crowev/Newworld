@@ -879,6 +879,12 @@ class Handler(BaseHTTPRequestHandler):
             if not username:
                 json_response(self, {"ok": False, "error": "缺少 username 参数"})
                 return
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("SELECT minecraft_id FROM users WHERE username = ?", (username,))
+            row = c.fetchone()
+            mc_name = (row[0] or username) if row else username
+            conn.close()
             uuid_map = {}
             try:
                 with open(USERCACHE) as f:
@@ -886,7 +892,7 @@ class Handler(BaseHTTPRequestHandler):
                         uuid_map[e["name"].lower()] = e["uuid"]
             except Exception:
                 pass
-            uid = uuid_map.get(username.lower())
+            uid = uuid_map.get(mc_name.lower())
             if not uid:
                 json_response(self, {"ok": False, "error": "未找到该玩家的游戏数据"})
                 return
