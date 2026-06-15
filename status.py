@@ -872,6 +872,54 @@ class Handler(BaseHTTPRequestHandler):
             json_response(self, {"ok": True, "posts": posts})
             return
 
+        if self.path.startswith("/api/player_stats"):
+            from urllib.parse import urlparse, parse_qs
+            qs = parse_qs(urlparse(self.path).query)
+            username = qs.get("username", [None])[0]
+            if not username:
+                json_response(self, {"ok": False, "error": "缺少 username 参数"})
+                return
+            uuid_map = {}
+            try:
+                with open(USERCACHE) as f:
+                    for e in json.load(f):
+                        uuid_map[e["name"].lower()] = e["uuid"]
+            except Exception:
+                pass
+            uid = uuid_map.get(username.lower())
+            if not uid:
+                json_response(self, {"ok": False, "error": "未找到该玩家的游戏数据"})
+                return
+            stats_path = "/root/NewWorldDevelopmentCommittee/world/stats/" + uid + ".json"
+            if not os.path.exists(stats_path):
+                json_response(self, {"ok": False, "error": "暂无统计数据"})
+                return
+            try:
+                with open(stats_path) as f:
+                    raw = json.load(f)
+            except Exception:
+                json_response(self, {"ok": False, "error": "数据读取失败"})
+                return
+            sc = raw.get("stats", {}).get("minecraft:custom", {})
+            def g(key): return sc.get("minecraft:" + key, 0)
+            play_min = g("play_time") // 20 // 60
+            stats = {
+                "play_time": str(play_min // 60) + " 小时 " + str(play_min % 60) + " 分钟",
+                "deaths": g("deaths"),
+                "mob_kills": g("mob_kills"),
+                "player_kills": g("player_kills"),
+                "damage_dealt": g("damage_dealt"),
+                "damage_taken": g("damage_taken"),
+                "jumps": g("jump"),
+                "walk_cm": g("walk_one_cm"),
+                "fly_cm": g("fly_one_cm"),
+                "sprint_cm": g("sprint_one_cm"),
+                "items_dropped": g("drop"),
+                "chests_opened": g("open_chest"),
+            }
+            json_response(self, {"ok": True, "stats": stats})
+            return
+
         if self.path == "/api/gallery":
             upload_dir = "/var/www/newworld/uploads/"
             images = []

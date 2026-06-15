@@ -78,6 +78,10 @@ body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;backgroun
         <span class="value" id="pBadges">无</span>
       </div>
       <div id="badgeRow" style="display:none;padding:.5rem 0;border-top:1px solid #3e3860;margin-top:.5rem;text-align:center"></div>
+    <div id="statsCard" style="display:none;margin-top:.8rem;padding:.8rem;background:rgba(34,28,56,.35);border:1px solid #3e3860;border-radius:10px">
+      <div style="font-size:.82rem;color:#a0b8d0;margin-bottom:.5rem;font-weight:500">🎮 游戏数据</div>
+      <div id="statsGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;font-size:.78rem"></div>
+    </div>
     </div>
   </div>
   <button class="back-top" id="backTop">↑</button>
@@ -122,6 +126,7 @@ async function loadUser() {
       av.innerHTML = u.username.charAt(0).toUpperCase();
     }
     loadBadges(username);
+    loadPlayerStats(username);
     $('loading').style.display = 'none';
     $('profileContent').style.display = 'block';
   } catch(e) { $('loading').style.display = 'none'; $('error').style.display = 'block'; $('error').textContent = '加载失败'; }
@@ -142,6 +147,30 @@ async function loadBadges(username) {
       const icon = BADGE_ICONS[b.key] || '🏅';
       const name = BADGE_NAMES[b.key] || b.key;
       return '<span title="' + name + ' · ' + b.earned_at + '" style="display:inline-block;margin:.2rem;padding:.35rem .7rem;border-radius:999px;background:rgba(130,90,40,.25);border:1px solid rgba(180,140,50,.3);font-size:.85rem;cursor:default;transition:.2s">' + icon + ' ' + name + '</span>';
+    }).join('');
+  } catch(e) {}
+}
+
+const STAT_LABELS = {
+  play_time: '⏱ 在线时长', deaths: '💀 死亡次数', mob_kills: '🗡️ 击杀怪物',
+  player_kills: '⚔️ 击杀玩家', damage_dealt: '💥 造成伤害', damage_taken: '🛡️ 承受伤害',
+  jumps: '🦘 跳跃次数', walk_cm: '🚶 行走距离', fly_cm: '🪽 飞行距离',
+  sprint_cm: '🏃 冲刺距离', items_dropped: '📦 丢弃物品', chests_opened: '📭 打开箱子',
+};
+
+async function loadPlayerStats(username) {
+  try {
+    const r = await fetch('/api/player_stats?username=' + encodeURIComponent(username));
+    const d = await r.json();
+    if (!d.ok || !d.stats) return;
+    document.getElementById('statsCard').style.display = 'block';
+    const grid = document.getElementById('statsGrid');
+    grid.innerHTML = Object.entries(STAT_LABELS).map(([k, label]) => {
+      let v = d.stats[k] || 0;
+      if ((k === 'walk_cm' || k === 'fly_cm' || k === 'sprint_cm') && typeof v === 'number') {
+        v = (v / 100).toFixed(0) + ' m';
+      }
+      return '<div style="display:flex;justify-content:space-between;padding:.25rem .3rem;background:rgba(34,28,56,.3);border-radius:5px"><span style="color:#8a84a8">' + label + '</span><span style="color:#c8e0c8">' + v + '</span></div>';
     }).join('');
   } catch(e) {}
 }

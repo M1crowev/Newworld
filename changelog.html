@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>更新日志 - NewWorld</title>
+<link rel="stylesheet" href="/common.css">
+<script src="/common.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#2f2a48;color:#e4e0f0;min-height:100vh;background-image:radial-gradient(ellipse at 40% 15%,rgba(120,100,200,.12) 0%,transparent 55%),radial-gradient(ellipse at 60% 85%,rgba(90,110,190,.08) 0%,transparent 50%);padding:2rem}
+.container{max-width:700px;margin:0 auto}
+.top-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem}
+.top-bar h1{font-size:1.3rem;color:#e4e0f0;letter-spacing:1px}
+.top-bar a{color:#b0a8d0;text-decoration:none;font-size:.85rem;padding:.3rem .8rem;border:1px solid #4e4880;border-radius:6px;transition:.2s}
+.top-bar a:hover{background:rgba(90,70,160,.15)}
+.entry{background:rgba(42,36,64,.6);border:1px solid #484070;border-radius:14px;padding:1.3rem;backdrop-filter:blur(10px);margin-bottom:1rem}
+.entry .date{font-size:.72rem;color:#7a7498;margin-bottom:.2rem}
+.entry .date .tag{display:inline-block;font-size:.6rem;padding:.08rem .4rem;border-radius:4px;margin-left:.4rem;vertical-align:middle}
+.entry .tag-new{background:rgba(80,180,100,.2);color:#80d090;border:1px solid rgba(80,180,100,.25)}
+.entry .tag-fix{background:rgba(180,150,50,.2);color:#d0b848;border:1px solid rgba(180,150,50,.25)}
+.entry .tag-change{background:rgba(60,130,180,.2);color:#70b8d0;border:1px solid rgba(60,130,180,.25)}
+.entry h3{font-size:.95rem;color:#d0cce8;font-weight:500;margin-bottom:.3rem}
+.entry ul{padding-left:1.1rem}
+.entry li{font-size:.82rem;color:#c8c4dc;line-height:1.7;margin-bottom:.1rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <h1>📋 更新日志</h1>
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <span class="theme-switcher-wrap"></span>
+      <a href="/wiki">📖 帮助</a>
+      <a href="/">← 首页</a>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="date">2026-06-15 <span class="tag tag-new">新增</span></div>
+    <h3>主题切换 + 图片灯箱 + Markdown</h3>
+    <ul>
+      <li>新增 4 套主题色（紫夜/深海/森林/余烬），点击导航栏 🎨 切换</li>
+      <li>图片点击改为灯箱放大查看，不再开新标签页</li>
+      <li>论坛支持 Markdown 格式（粗体、列表、代码块、引用等）</li>
+      <li>发帖/回复自动保存草稿，防止误刷新丢失</li>
+      <li>导航栏新增未读消息红点提示</li>
+      <li>新增图片画廊页面 /gallery</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="date">2026-06-15 <span class="tag tag-new">新增</span></div>
+    <h3>活动日志 + 邮箱设置 + 移动端优化</h3>
+    <ul>
+      <li>首页新增全服最新动态展示</li>
+      <li>新增活动日志页面 /activity，支持按类型筛选</li>
+      <li>个人中心可修改邮箱地址</li>
+      <li>移动端适配优化（表格滚动、卡片布局等）</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="date">2026-06-15 <span class="tag tag-new">新增</span></div>
+    <h3>自动通知 + 密码找回 + 成就徽章 + 点赞收藏</h3>
+    <ul>
+      <li>回复帖子时自动通知楼主</li>
+      <li>科技审核通过/拒绝时自动通知提交者</li>
+      <li>新增密码找回功能（登录页"忘记密码"）</li>
+      <li>完成科技树阶段自动获得成就徽章</li>
+      <li>帖子支持点赞和收藏</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="date">2026-06-15 <span class="tag tag-new">新增</span></div>
+    <h3>用户资料页 + 科技树状态 + 标题编辑 + 审核面板</h3>
+    <ul>
+      <li>新增公开用户资料页，点击用户名可查看</li>
+      <li>科技树卡片显示个人提交状态（已通过/审核中/未通过）</li>
+      <li>论坛帖子支持编辑标题</li>
+      <li>管理后台新增科技审核面板</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="date">2026-06-15 <span class="tag tag-new">新增</span></div>
+    <h3>论坛 + 排行榜 + 科技树 + 头像 + 管理后台</h3>
+    <ul>
+      <li>论坛支持分类、搜索、置顶、分页、编辑、删除</li>
+      <li>排行榜支持在线时长、论坛活跃排行</li>
+      <li>科技树页面上线，支持提交审核</li>
+      <li>用户头像上传</li>
+      <li>管理后台支持用户管理和帖子管理</li>
+    </ul>
+  </div>
+
+  <button class="back-top" id="backTop">↑</button>
+</div>
+<script>
+initTheme(); initBackTop();
+</script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>帮助文档 - NewWorld</title>
+<link rel="stylesheet" href="/common.css">
+<script src="/common.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#2f2a48;color:#e4e0f0;min-height:100vh;background-image:radial-gradient(ellipse at 40% 15%,rgba(120,100,200,.12) 0%,transparent 55%),radial-gradient(ellipse at 60% 85%,rgba(90,110,190,.08) 0%,transparent 50%);padding:2rem}
+.container{max-width:800px;margin:0 auto}
+.top-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem}
+.top-bar h1{font-size:1.3rem;color:#e4e0f0;letter-spacing:1px}
+.top-bar a{color:#b0a8d0;text-decoration:none;font-size:.85rem;padding:.3rem .8rem;border:1px solid #4e4880;border-radius:6px;transition:.2s}
+.top-bar a:hover{background:rgba(90,70,160,.15)}
+.toc{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.toc a{padding:.35rem 1rem;border-radius:999px;font-size:.78rem;cursor:pointer;border:1px solid #484070;background:transparent;color:#b0a8d0;text-decoration:none;transition:.2s}
+.toc a:hover,.toc a.active{background:rgba(75,65,130,.55);color:#e4e0f0;border-color:#686098}
+.section{background:rgba(42,36,64,.6);border:1px solid #484070;border-radius:14px;padding:1.5rem;backdrop-filter:blur(10px);margin-bottom:1.2rem}
+.section h2{font-size:1.1rem;color:#c0b8d8;font-weight:400;letter-spacing:1px;margin-bottom:.8rem;padding-bottom:.4rem;border-bottom:1px solid #3e3860}
+.section h3{font-size:.95rem;color:#b0a8d0;font-weight:500;margin:1rem 0 .4rem}
+.section p,.section li{font-size:.85rem;color:#d0cce4;line-height:1.7}
+.section ul{padding-left:1.2rem}
+.section li{margin-bottom:.2rem}
+code{background:rgba(30,26,50,.55);padding:.12rem .45rem;border-radius:5px;font-size:.8rem;color:#e0dcf0;border:1px solid #3e3860;word-break:break-all}
+pre{background:rgba(30,26,50,.55);border:1px solid #3e3860;border-radius:8px;padding:.8rem;overflow-x:auto;margin:.4rem 0}
+pre code{background:none;border:none;padding:0;font-size:.8rem;line-height:1.5;word-break:normal}
+.mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.5rem;margin:.5rem 0}
+.mod-item{background:rgba(34,28,56,.35);border:1px solid #3e3860;border-radius:8px;padding:.6rem .8rem}
+.mod-item .name{font-size:.82rem;color:#c8e0c8;font-weight:500}
+.mod-item .desc{font-size:.72rem;color:#8a84a8;margin-top:.1rem;line-height:1.5}
+@media(max-width:480px){body{padding:1rem}.mod-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <h1>📖 帮助文档</h1>
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <span class="theme-switcher-wrap"></span>
+      <a href="/">← 首页</a>
+    </div>
+  </div>
+
+  <div class="toc">
+    <a href="#guide">🎮 新手指南</a>
+    <a href="#commands">⌨️ 常用指令</a>
+    <a href="#mods">🧩 模组列表</a>
+    <a href="#faq">❓ 常见问题</a>
+    <a href="#rules">📜 服务器规则</a>
+  </div>
+
+  <div class="section" id="guide">
+    <h2>🎮 新手指南</h2>
+    <h3>如何加入服务器</h3>
+    <ul>
+      <li>下载对应的模组包（<a href="/mods" style="color:#6ab8ff">点此下载</a>）</li>
+      <li>将下载的模组放入 <code>.minecraft/mods</code> 文件夹</li>
+      <li>启动游戏，版本选择 <strong>1.21.1 · NeoForge</strong></li>
+      <li>服务器地址：<code>NewWorld.largemodel.online</code></li>
+    </ul>
+    <h3>网站功能</h3>
+    <ul>
+      <li><strong>注册账号</strong> — 在首页注册，用于论坛发帖、提交科技树</li>
+      <li><strong>绑定MC ID</strong> — 在个人中心绑定你的游戏ID</li>
+      <li><strong>科技树</strong> — 完成项目后提交审核，获得成就徽章</li>
+      <li><strong>论坛</strong> — 交流讨论、问题反馈、创意分享</li>
+    </ul>
+  </div>
+
+  <div class="section" id="commands">
+    <h2>⌨️ 常用指令</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <tr style="border-bottom:1px solid #3e3860"><th style="text-align:left;padding:.4rem;color:#8a84a8;font-weight:400">指令</th><th style="text-align:left;padding:.4rem;color:#8a84a8;font-weight:400">说明</th></tr>
+      <tr><td style="padding:.4rem"><code>/tpa &lt;玩家&gt;</code></td><td style="padding:.4rem;color:#d0cce4">传送到某玩家身边</td></tr>
+      <tr><td style="padding:.4rem"><code>/tpahere &lt;玩家&gt;</code></td><td style="padding:.4rem;color:#d0cce4">邀请玩家传送到你身边</td></tr>
+      <tr><td style="padding:.4rem"><code>/sethome</code></td><td style="padding:.4rem;color:#d0cce4">设置家</td></tr>
+      <tr><td style="padding:.4rem"><code>/home</code></td><td style="padding:.4rem;color:#d0cce4">回到家的位置</td></tr>
+      <tr><td style="padding:.4rem"><code>/spawn</code></td><td style="padding:.4rem;color:#d0cce4">回到出生点</td></tr>
+      <tr><td style="padding:.4rem"><code>/msg &lt;玩家&gt; &lt;消息&gt;</code></td><td style="padding:.4rem;color:#d0cce4">私聊某玩家</td></tr>
+      <tr><td style="padding:.4rem"><code>/pay &lt;玩家&gt; &lt;金额&gt;</code></td><td style="padding:.4rem;color:#d0cce4">给某玩家转钱</td></tr>
+      <tr><td style="padding:.4rem"><code>/bal</code></td><td style="padding:.4rem;color:#d0cce4">查看余额</td></tr>
+      <tr><td style="padding:.4rem"><code>/land</code></td><td style="padding:.4rem;color:#d0cce4">领地管理</td></tr>
+      <tr><td style="padding:.4rem"><code>/ec</code></td><td style="padding:.4rem;color:#d0cce4">打开末影箱</td></tr>
+      <tr><td style="padding:.4rem"><code>/trash</code></td><td style="padding:.4rem;color:#d0cce4">打开垃圾桶</td></tr>
+    </table>
+  </div>
+
+  <div class="section" id="mods">
+    <h2>🧩 模组列表</h2>
+    <div class="mod-grid">
+      <div class="mod-item"><div class="name">⚙️ 机械动力 (Create)</div><div class="desc">核心科技模组，提供传动、自动化、列车等机械系统</div></div>
+      <div class="mod-item"><div class="name">🔫 TacZ</div><div class="desc">枪械模组，包含多种现代枪械、火炮和弹药</div></div>
+      <div class="mod-item"><div class="name">🧑‍🌾 农夫乐事</div><div class="desc">扩展种植、烹饪和食物系统</div></div>
+      <div class="mod-item"><div class="name">🗺️ Xaero 小地图</div><div class="desc">小地图和世界地图，支持路径点</div></div>
+      <div class="mod-item"><div class="name">📦 JEI</div><div class="desc">物品管理器，查看合成配方和用途</div></div>
+      <div class="mod-item"><div class="name">🗺️ Chunky</div><div class="desc">预生成区块，优化服务器性能</div></div>
+      <div class="mod-item"><div class="name">🌍 Terrarium</div><div class="desc">1:300 真实比例地球地形生成</div></div>
+    </div>
+  </div>
+
+  <div class="section" id="faq">
+    <h2>❓ 常见问题</h2>
+    <h3>进不去服务器怎么办？</h3>
+    <ul><li>确认游戏版本为 <strong>1.21.1</strong>，加载器为 <strong>NeoForge</strong></li><li>确认已安装所有必需的模组</li><li>检查服务器状态（首页有实时状态显示）</li></ul>
+    <h3>如何注册网站账号？</h3>
+    <ul><li>点击首页右上角"注册"，填写用户名、密码、邮箱即可</li></ul>
+    <h3>如何绑定游戏ID？</h3>
+    <ul><li>登录网站后进入个人中心，在"玩家ID"处点击"绑定"</li></ul>
+    <h3>忘记密码怎么办？</h3>
+    <ul><li>登录弹窗点击"忘记密码"，输入注册邮箱获取重置链接</li></ul>
+    <h3>如何提交科技树？</h3>
+    <ul><li>进入科技树页面，点击想要提交的科技卡片，填写说明并上传图片</li></ul>
+    <h3>地盘被别人破坏了怎么办？</h3>
+    <ul><li>可以使用领地指令 <code>/land</code> 保护自己的建筑</li><li>在论坛"问题反馈"分类发帖，附上截图和坐标</li></ul>
+  </div>
+
+  <div class="section" id="rules">
+    <h2>📜 服务器规则</h2>
+    <ul>
+      <li><strong>禁止</strong> 使用作弊客户端、外挂、X-Ray 等不公平模组</li>
+      <li><strong>禁止</strong> 恶意破坏他人建筑、偷窃他人财物</li>
+      <li><strong>禁止</strong> 刷屏、辱骂、人身攻击、引战</li>
+      <li><strong>禁止</strong> 利用游戏漏洞获取不正当利益</li>
+      <li><strong>禁止</strong> 在领地/建筑附近建造大规模刷怪塔影响他人</li>
+      <li><strong>建议</strong> 使用领地指令 <code>/land</code> 保护自己的建筑</li>
+      <li><strong>建议</strong> 团结合作，共同建设新世界</li>
+    </ul>
+  </div>
+
+  <button class="back-top" id="backTop">↑</button>
+</div>
+<script>
+initTheme(); initBackTop();
+</script>
+</body>
+</html>
