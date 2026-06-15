@@ -80,6 +80,7 @@ td{color:#d0cce4}
     <button class="tab active" onclick="switchTab('users',this)">👥 用户管理</button>
     <button class="tab" onclick="switchTab('posts',this)">📋 帖子管理</button>
     <button class="tab" onclick="switchTab('tech',this)">🔬 科技审核</button>
+    <button class="tab" onclick="switchTab('ops',this)">⚡ 运维</button>
   </div>
 
   <div id="usersPanel">
@@ -100,6 +101,19 @@ td{color:#d0cce4}
     <div class="card">
       <h2>🔬 科技树审核</h2>
       <div id="techSubList"><div class="empty">加载中...</div></div>
+    </div>
+  </div>
+
+  <div id="opsPanel" style="display:none">
+    <div class="card">
+      <h2>💾 备份状态</h2>
+      <div id="backupInfo"><div class="empty">加载中...</div></div>
+    </div>
+    <div class="card">
+      <h2>📊 生成周报</h2>
+      <div style="font-size:.82rem;color:#8a84a8;margin-bottom:.6rem">汇总过去7天的数据，生成一篇论坛帖子</div>
+      <button class="btn btn-primary" onclick="generateReport()">📝 生成并发布周报</button>
+      <div id="reportResult" style="margin-top:.5rem;font-size:.8rem"></div>
     </div>
   </div>
 </div>
@@ -226,8 +240,10 @@ function switchTab(name, el) {
   document.getElementById('usersPanel').style.display = name === 'users' ? 'block' : 'none';
   document.getElementById('postsPanel').style.display = name === 'posts' ? 'block' : 'none';
   document.getElementById('techPanel').style.display = name === 'tech' ? 'block' : 'none';
+  document.getElementById('opsPanel').style.display = name === 'ops' ? 'block' : 'none';
   if (name === 'posts') loadAdminPosts();
   if (name === 'tech') loadTechSubmissions();
+  if (name === 'ops') loadBackupStatus();
 }
 
 async function loadTechSubmissions() {
@@ -258,6 +274,42 @@ async function reviewTechSub(id, status) {
 }
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function loadBackupStatus() {
+  try {
+    const r = await fetch('/api/admin/backup_status', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    const el = document.getElementById('backupInfo');
+    if (!d.ok || !d.backup) { el.innerHTML = '<div class="empty">无权访问</div>'; return; }
+    const b = d.backup;
+    if (!b.last_backup) { el.innerHTML = '<div class="empty">暂无备份</div>'; return; }
+    el.innerHTML = '<table><thead><tr><th>项目</th><th>值</th></tr></thead><tbody>' +
+      '<tr><td style="color:#8a84a8">最近备份</td><td>' + b.last_backup + '</td></tr>' +
+      '<tr><td style="color:#8a84a8">备份大小</td><td>' + b.size_mb + ' MB</td></tr>' +
+      '<tr><td style="color:#8a84a8">历史备份数</td><td>' + b.count + ' 份</td></tr>' +
+      '</tbody></table>';
+  } catch(e) { document.getElementById('backupInfo').innerHTML = '<div class="empty">加载失败</div>'; }
+}
+
+async function generateReport() {
+  const btn = document.querySelector('.btn-primary');
+  const res = document.getElementById('reportResult');
+  btn.disabled = true; btn.textContent = '生成中...';
+  res.innerHTML = '';
+  try {
+    const r = await fetch('/api/admin/weekly_report', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    if (d.ok && d.report) {
+      const s = d.report.stats;
+      res.innerHTML = '<div class="success">✅ 周报数据已生成</div>' +
+        '<div style="font-size:.78rem;color:#888;margin-top:.3rem;line-height:1.6">' +
+        '📄 新帖子 ' + s.new_posts + ' · 💬 新回复 ' + s.new_replies + ' · 🔬 科技提交 ' + s.new_tech + ' · 👤 新玩家 ' + s.new_users + '</div>' +
+        '<div style="font-size:.72rem;color:#7a7498;margin-top:.3rem">内容已返回，尚未发布为帖子。你可以复制以下内容手动发帖：</div>' +
+        '<textarea style="width:100%;min-height:120px;margin-top:.4rem;padding:.5rem;border:1px solid #484070;border-radius:8px;background:#282448;color:#e0dcf0;font-size:.78rem;outline:none;resize:vertical">' + esc(d.report.content) + '</textarea>';
+    } else { res.innerHTML = '<div class="error" style="display:block">❌ ' + (d.error || '生成失败') + '</div>'; }
+  } catch(e) { res.innerHTML = '<div class="error" style="display:block">❌ 网络错误</div>'; }
+  btn.disabled = false; btn.textContent = '📝 生成并发布周报';
+}
 
 checkAdmin();
 initTheme(); initBackTop(); initLightbox(); initUnreadBadge();

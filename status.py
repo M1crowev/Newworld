@@ -114,6 +114,28 @@ def init_db():
         FOREIGN KEY (user_id) REFERENCES users(id),
         FOREIGN KEY (post_id) REFERENCES forum_posts(id)
     )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS post_polls (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER NOT NULL UNIQUE,
+        question TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (post_id) REFERENCES forum_posts(id)
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS poll_options (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        poll_id INTEGER NOT NULL,
+        text TEXT NOT NULL,
+        FOREIGN KEY (poll_id) REFERENCES post_polls(id)
+    )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS poll_votes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        option_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        UNIQUE(option_id, user_id),
+        FOREIGN KEY (option_id) REFERENCES poll_options(id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )""")
     conn.commit()
     conn.close()
 
@@ -235,6 +257,18 @@ def add_message(user_id, content):
     c.execute("INSERT INTO messages (user_id, content) VALUES (?, ?)", (user_id, content))
     conn.commit()
     conn.close()
+
+def send_mentions(content, exclude_user_id):
+    import re
+    for m in re.finditer(r'@(\S{2,16})', content):
+        mentioned = m.group(1)
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT id FROM users WHERE username = ? AND id != ?", (mentioned, exclude_user_id))
+        row = c.fetchone()
+        if row:
+            c.execute("INSERT INTO messages (user_id, content) VALUES (?, ?)", (row[0], "👤 有人在帖子中提到了你 @@" + mentioned))
+        conn.close()
 
 def check_and_award_badges(username):
     conn = sqlite3.connect(DB_PATH)
@@ -372,8 +406,19 @@ class Handler(BaseHTTPRequestHandler):
             c = conn.cursor()
             c.execute("INSERT INTO forum_posts (title, content, author_id, author_name, category) VALUES (?, ?, ?, ?, ?)",
                       (title, content, user["id"], user["username"], category))
+            post_id = c.lastrowid
+            poll_data = data.get("poll")
+            if poll_data and isinstance(poll_data, dict) and poll_data.get("question") and poll_data.get("options"):
+                question = poll_data["question"].strip()
+                options = [o.strip() for o in poll_data["options"] if o.strip()]
+                if question and len(options) >= 2:
+                    c.execute("INSERT INTO post_polls (post_id, question) VALUES (?, ?)", (post_id, question))
+                    poll_id = c.lastrowid
+                    for opt in options:
+                        c.execute("INSERT INTO poll_options (poll_id, text) VALUES (?, ?)", (poll_id, opt))
             conn.commit()
             conn.close()
+            send_mentions(content, user["id"])
             json_response(self, {"ok": True})
             return
 
@@ -487,6 +532,7 @@ class Handler(BaseHTTPRequestHandler):
                 c.execute("INSERT INTO messages (user_id, content) VALUES (?, ?)", (post_row[0], msg))
             conn.commit()
             conn.close()
+            send_mentions(content, user["id"])
             json_response(self, {"ok": True})
             return
 
@@ -686,6 +732,71 @@ class Handler(BaseHTTPRequestHandler):
                 json_response(self, {"ok": True, "liked": True})
             return
 
+        if self.path == "/api/forum/poll/vote":
+            user = require_auth(self.headers)
+            if not user:
+                json_response(self, {"ok": False, "error": "未登录"})
+                return
+            post_id = data.get("post_id")
+            option_id = data.get("option_id")
+            if not post_id or not option_id:
+                json_response(self, {"ok": False, "error": "参数错误"})
+                return
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("SELECT id FROM post_polls WHERE post_id = ?", (post_id,))
+            poll_row = c.fetchone()
+            if not poll_row:
+                conn.close()
+                json_response(self, {"ok": False, "error": "投票不存在"})
+                return
+            poll_id = poll_row[0]
+            c.execute("SELECT id FROM poll_options WHERE id = ? AND poll_id = ?", (option_id, poll_id))
+            if not c.fetchone():
+                conn.close()
+                json_response(self, {"ok": False, "error": "选项不存在"})
+                return
+            c.execute("SELECT id FROM poll_votes WHERE option_id IN (SELECT id FROM poll_options WHERE poll_id = ?) AND user_id = ?", (poll_id, user["id"]))
+            existing = c.fetchone()
+            if existing:
+                c.execute("DELETE FROM poll_votes WHERE id = ?", (existing[0],))
+            c.execute("INSERT INTO poll_votes (option_id, user_id) VALUES (?, ?)", (option_id, user["id"]))
+            conn.commit()
+            conn.close()
+            json_response(self, {"ok": True})
+            return
+
+        if self.path == "/api/admin/weekly_report":
+            user = require_admin(self.headers)
+            if not user:
+                json_response(self, {"ok": False, "error": "无权访问"})
+                return
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) FROM forum_posts WHERE created_at >= datetime('now', '-7 days')")
+            new_posts = c.fetchone()[0]
+            c.execute("SELECT COUNT(*) FROM forum_replies WHERE created_at >= datetime('now', '-7 days')")
+            new_replies = c.fetchone()[0]
+            c.execute("SELECT COUNT(*) FROM tech_submissions WHERE created_at >= datetime('now', '-7 days')")
+            new_tech = c.fetchone()[0]
+            c.execute("SELECT COUNT(*) FROM users WHERE created_at >= datetime('now', '-7 days')")
+            new_users = c.fetchone()[0]
+            conn.close()
+            conn2 = sqlite3.connect(DB_PATH)
+            c2 = conn2.cursor()
+            c2.execute("SELECT title, author_name, created_at FROM forum_posts WHERE created_at >= datetime('now', '-7 days') ORDER BY reply_count DESC LIMIT 5")
+            hot_posts = [{"title": r[0], "author": r[1], "created_at": r[2]} for r in c2.fetchall()]
+            conn2.close()
+            content = "📊 **本周服务器简报**\n\n"
+            content += f"- **新帖子**: {new_posts} 篇\n- **新回复**: {new_replies} 条\n- **科技提交**: {new_tech} 个\n- **新玩家**: {new_users} 人\n\n"
+            if hot_posts:
+                content += "🔥 **热门帖子**:\n"
+                for p in hot_posts:
+                    content += f"- 《{p['title']}》by {p['author']}\n"
+            content += "\n> 自动生成于 " + time.strftime("%Y-%m-%d %H:%M")
+            json_response(self, {"ok": True, "report": {"content": content, "stats": {"new_posts": new_posts, "new_replies": new_replies, "new_tech": new_tech, "new_users": new_users}}})
+            return
+
         if self.path == "/api/forum/bookmark":
             user = require_auth(self.headers)
             if not user:
@@ -821,6 +932,25 @@ class Handler(BaseHTTPRequestHandler):
                     c.execute("SELECT fr.id, fr.content, fr.author_name, fr.created_at, fr.updated_at, u.avatar FROM forum_replies fr LEFT JOIN users u ON fr.author_name = u.username WHERE fr.post_id = ? ORDER BY fr.created_at", (pid,))
                     replies = [{"id": r[0], "content": r[1], "author_name": r[2], "created_at": r[3], "updated_at": r[4], "author_avatar": r[5] or ""} for r in c.fetchall()]
                     post["replies"] = replies
+                    c.execute("SELECT pp.id, pp.question, po.id, po.text FROM post_polls pp LEFT JOIN poll_options po ON pp.id = po.poll_id WHERE pp.post_id = ?", (pid,))
+                    poll_rows = c.fetchall()
+                    if poll_rows:
+                        poll = {"id": poll_rows[0][0], "question": poll_rows[0][1], "options": []}
+                        seen_opts = {}
+                        for r in poll_rows:
+                            oid = r[2]
+                            if oid and oid not in seen_opts:
+                                seen_opts[oid] = True
+                                c.execute("SELECT COUNT(*) FROM poll_votes WHERE option_id = ?", (oid,))
+                                votes = c.fetchone()[0]
+                                voted = False
+                                if current_user_id:
+                                    c.execute("SELECT 1 FROM poll_votes WHERE option_id = ? AND user_id = ?", (oid, current_user_id))
+                                    voted = bool(c.fetchone())
+                                poll["options"].append({"id": oid, "text": r[3], "votes": votes, "voted": voted})
+                        total_votes = sum(o["votes"] for o in poll["options"])
+                        poll["total_votes"] = total_votes
+                        post["poll"] = poll
                 conn.close()
                 json_response(self, {"ok": bool(post), "post": post})
                 return
@@ -1069,6 +1199,30 @@ class Handler(BaseHTTPRequestHandler):
             subs = [{"id": r[0], "tech_key": r[1], "username": r[2], "description": r[3], "images": json.loads(r[4]), "status": r[5], "created_at": r[6]} for r in c.fetchall()]
             conn.close()
             json_response(self, {"ok": True, "submissions": subs})
+            return
+
+        if self.path == "/api/admin/backup_status":
+            user = require_admin(self.headers)
+            if not user:
+                json_response(self, {"ok": False, "error": "无权访问"})
+                return
+            backup_dir = "/root/newworld_backup"
+            info = {"last_backup": None, "size_mb": 0, "count": 0}
+            try:
+                backups = sorted([d for d in os.listdir(backup_dir) if os.path.isdir(os.path.join(backup_dir, d))], reverse=True)
+                if backups:
+                    latest = os.path.join(backup_dir, backups[0])
+                    total_size = 0
+                    for dirpath, _, filenames in os.walk(latest):
+                        for f in filenames:
+                            fp = os.path.join(dirpath, f)
+                            total_size += os.path.getsize(fp)
+                    info["last_backup"] = backups[0]
+                    info["size_mb"] = round(total_size / 1024 / 1024, 1)
+                    info["count"] = len(backups)
+            except Exception:
+                pass
+            json_response(self, {"ok": True, "backup": info})
             return
 
         if self.path == "/api/admin/users":

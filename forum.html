@@ -153,8 +153,18 @@ body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;backgroun
           <label class="upload-btn">📷 上传图片<input type="file" accept="image/*" onchange="uploadImage(this.files[0],'postContent')"></label>
           <span id="postUploadStatus" style="font-size:.75rem;color:#888"></span>
         </div>
+        <div id="postPreview" style="display:none;background:rgba(35,28,58,.35);border:1px solid #3e3860;border-radius:10px;padding:.8rem;margin-bottom:.5rem;font-size:.85rem;color:#d0cce4;line-height:1.7;white-space:pre-wrap"></div>
+        <div style="margin-bottom:.5rem">
+          <label style="font-size:.72rem;color:#7a7498;cursor:pointer"><input type="checkbox" id="pollToggle" onchange="togglePoll()"> 添加投票</label>
+          <div id="pollForm" style="display:none;margin-top:.4rem;padding:.5rem;background:rgba(30,24,48,.35);border-radius:8px">
+            <input id="pollQuestion" placeholder="投票问题" style="width:100%;padding:.4rem .6rem;border:1px solid #484070;border-radius:6px;background:#282448;color:#e0dcf0;font-size:.8rem;outline:none;margin-bottom:.3rem">
+            <div id="pollOptions"><input placeholder="选项 1" class="poll-opt" style="width:100%;padding:.35rem .6rem;border:1px solid #484070;border-radius:6px;background:#282448;color:#e0dcf0;font-size:.78rem;outline:none;margin-bottom:.2rem"></div>
+            <a onclick="addPollOption()" style="color:#6ab8ff;font-size:.72rem;cursor:pointer">+ 添加选项</a>
+          </div>
+        </div>
         <div style="display:flex;gap:.5rem">
           <button class="btn btn-primary" onclick="submitPost()" style="flex:1">发布</button>
+          <button class="btn btn-ghost" onclick="previewPost()" style="flex:0">👁️ 预览</button>
           <button class="btn btn-ghost" onclick="closeNewPost()">取消</button>
         </div>
       </div>
@@ -297,6 +307,7 @@ async function viewPost(id) {
         '<button class="close" onclick="closePost()">✕</button>' +
       '</div>' +
       '<div class="detail-body" id="postContentDisplay">' + renderContent(p.content) + '</div>' +
+      (p.poll ? renderPoll(p.poll, p.id) : '') +
       '<div class="reply-section">' +
         '<h4>💬 回复 <span style="color:#666;font-weight:400">(' + p.reply_count + ')</span></h4>' +
         '<div id="replyList">' +
@@ -328,9 +339,37 @@ function renderReply(r, user) {
   '</div>';
 }
 
+function renderPoll(poll, postId) {
+  const total = poll.total_votes || 1;
+  let html = '<div style="background:rgba(34,28,56,.4);border:1px solid #3e3860;border-radius:10px;padding:.8rem;margin-bottom:.8rem">' +
+    '<div style="font-size:.85rem;color:#c0b8d8;font-weight:500;margin-bottom:.4rem">📊 ' + poll.question + '</div>';
+  poll.options.forEach(o => {
+    const pct = Math.round(o.votes / total * 100);
+    const selected = o.voted ? ' style="border-color:#6ab8ff;background:rgba(106,184,255,.08)"' : '';
+    html += '<div' + selected + ' class="poll-option" data-pid="' + postId + '" data-oid="' + o.id + '" onclick="votePoll(' + postId + ',' + o.id + ')" style="cursor:' + (token ? 'pointer' : 'default') + ';padding:.35rem .5rem;border:1px solid #3e3860;border-radius:6px;margin-bottom:.25rem;transition:.1s">' +
+      '<div style="display:flex;justify-content:space-between;font-size:.78rem;position:relative;z-index:1">' +
+      '<span' + (o.voted ? ' style="color:#6ab8ff;font-weight:500"' : '') + '>' + o.text + '</span>' +
+      '<span style="color:#8a84a8">' + o.votes + ' 票 (' + pct + '%)</span></div>' +
+      '<div style="position:relative;height:4px;background:rgba(72,64,112,.3);border-radius:4px;margin-top:.2rem;overflow:hidden">' +
+      '<div style="width:' + pct + '%;height:100%;background:linear-gradient(90deg,#6ab8ff,#4a8add);border-radius:4px;transition:width .3s"></div></div></div>';
+  });
+  html += '<div style="font-size:.68rem;color:#7a7498;margin-top:.2rem">共 ' + poll.total_votes + ' 票' + (token ? ' · 点击即可投票' : '') + '</div></div>';
+  return html;
+}
+
+async function votePoll(postId, optionId) {
+  if (!token) { alert('请先登录'); return; }
+  try {
+    const r = await fetch('/api/forum/poll/vote', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({post_id: postId, option_id: optionId})});
+    const d = await r.json();
+    if (d.ok) viewPost(postId);
+  } catch(e) {}
+}
+
 function renderContent(text) {
   if (!text) return '';
   let h = esc(text);
+  h = h.replace(/@(\S{2,16})/g, '<a href="/user?username=$1" style="color:#6ab8ff;text-decoration:none">@$1</a>');
   h = h.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="lang-$1">$2</code></pre>');
   h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
   h = h.replace(/!\[(.*?)\]\((\/[^)]+)\)/g, '<img src="$2" alt="$1" class="img-preview lightbox-trigger" onerror="this.style.display=\'none\'">');
@@ -510,14 +549,43 @@ function clearDraft() {
   localStorage.removeItem('nw-draft-content');
 }
 
-async function submitPost() {
+async function togglePoll() {
+  document.getElementById('pollForm').style.display = document.getElementById('pollToggle').checked ? 'block' : 'none';
+}
+
+function addPollOption() {
+  const container = document.getElementById('pollOptions');
+  const n = container.querySelectorAll('input').length + 1;
+  const inp = document.createElement('input');
+  inp.className = 'poll-opt';
+  inp.placeholder = '选项 ' + n;
+  inp.style.cssText = 'width:100%;padding:.35rem .6rem;border:1px solid #484070;border-radius:6px;background:#282448;color:#e0dcf0;font-size:.78rem;outline:none;margin-bottom:.2rem';
+  container.appendChild(inp);
+}
+
+function previewPost() {
+  const title = document.getElementById('postTitle').value.trim();
+  const content = document.getElementById('postContent').value.trim();
+  const preview = document.getElementById('postPreview');
+  if (!title && !content) return;
+  preview.style.display = 'block';
+  preview.innerHTML = '<div style="font-size:.95rem;color:#d8d0e8;font-weight:600;margin-bottom:.3rem">' + title + '</div><div style="border-top:1px solid #3e3860;padding-top:.5rem;margin-top:.3rem">' + renderContent(content) + '</div>';
+}
+
+function submitPost() {
   const category = document.getElementById('postCategory').value;
   const title = document.getElementById('postTitle').value.trim();
   const content = document.getElementById('postContent').value.trim();
   const err = document.getElementById('postError');
   if (!title || !content) { err.textContent = '标题和内容不能为空'; err.style.display = 'block'; return; }
+  const body = {title, content, category};
+  if (document.getElementById('pollToggle').checked) {
+    const question = document.getElementById('pollQuestion').value.trim();
+    const opts = Array.from(document.querySelectorAll('.poll-opt')).map(i => i.value.trim()).filter(Boolean);
+    if (question && opts.length >= 2) body.poll = {question, options: opts};
+  }
   try {
-    const r = await fetch('/api/forum/post', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({title, content, category})});
+    const r = await fetch('/api/forum/post', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify(body)});
     const d = await r.json();
     if (d.ok) { closeNewPost(); clearDraft(); document.getElementById('postTitle').value = ''; document.getElementById('postContent').value = ''; loadPosts(); }
     else { err.textContent = d.error; err.style.display = 'block'; }
