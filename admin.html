@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理后台 - NewWorld</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#2f2a48;color:#e4e0f0;min-height:100vh;background-image:radial-gradient(ellipse at 40% 15%,rgba(120,100,200,.12) 0%,transparent 55%),radial-gradient(ellipse at 60% 85%,rgba(90,110,190,.08) 0%,transparent 50%);padding:2rem}
+.container{max-width:900px;margin:0 auto}
+.top-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:2rem}
+.top-bar h1{font-size:1.4rem;color:#e4e0f0;letter-spacing:1px}
+.top-bar a{color:#b0a8d0;text-decoration:none;font-size:.85rem;padding:.3rem .8rem;border:1px solid #4e4880;border-radius:6px;transition:.2s}
+.top-bar a:hover{background:rgba(90,70,160,.15)}
+.card{background:rgba(42,36,64,.6);border:1px solid #484070;border-radius:14px;padding:1.3rem;backdrop-filter:blur(10px);margin-bottom:1.4rem;box-shadow:0 2px 24px rgba(0,0,0,.18)}
+.card h2{font-size:1.05rem;margin-bottom:.8rem;color:#c0b8d8;font-weight:400;letter-spacing:1px}
+.tabs{display:flex;gap:.4rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.tab{padding:.35rem 1.1rem;border-radius:999px;font-size:.8rem;cursor:pointer;border:1px solid #484070;background:transparent;color:#b0a8d0;transition:.2s}
+.tab:hover{border-color:#6a6298;background:rgba(90,70,160,.15)}
+.tab.active{background:rgba(75,65,130,.55);color:#e4e0f0;border-color:#686098}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{text-align:left;padding:.5rem .4rem;border-bottom:1px solid #363058}
+th{color:#8a84a8;font-weight:500;font-size:.78rem}
+td{color:#d0cce4}
+.user-admin{color:#d0a870;font-weight:500}
+.action-link{cursor:pointer;color:#80a0c8;font-size:.78rem;text-decoration:underline}
+.action-link:hover{color:#a0c0e0}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border-radius:8px;font-size:.8rem;cursor:pointer;border:none;font-weight:500;transition:.2s}
+.btn-primary{background:rgba(75,65,130,.55);color:#e4e0f0}
+.btn-primary:hover{background:rgba(85,75,150,.65)}
+.btn-danger{background:rgba(130,50,50,.5);color:#e0d0d0}
+.btn-danger:hover{background:rgba(150,60,60,.6)}
+.btn-ghost{background:transparent;border:1px solid #4e4880;color:#b0a8d0}
+.btn-ghost:hover{background:rgba(90,70,160,.15)}
+.empty{text-align:center;color:#8a84a8;padding:1.5rem;font-size:.8rem}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:100;padding:1rem}
+.modal.show{display:flex}
+.modal-box{background:#2f2a48;border:1px solid #484070;border-radius:14px;padding:1.5rem;width:100%;max-width:400px;box-shadow:0 6px 32px rgba(0,0,0,.35)}
+.modal-box h3{font-size:1.05rem;margin-bottom:.8rem;color:#c0b8d8;font-weight:400;letter-spacing:1px}
+.modal-box textarea{width:100%;min-height:80px;padding:.55rem;border:1px solid #484070;border-radius:8px;background:#282448;color:#e0dcf0;font-size:.85rem;outline:none;resize:vertical;margin-bottom:.5rem}
+.modal-box textarea:focus{border-color:#6a6298}
+.modal-box .btn-row{display:flex;gap:.5rem}
+.error{color:#d07a7a;font-size:.78rem;display:none;text-align:center;margin-bottom:.5rem}
+.success{color:#c8e0c8;text-align:center;padding:.5rem;font-size:.8rem}
+.tech-sub{background:rgba(34,28,56,.35);border:1px solid rgba(72,64,112,.2);border-radius:10px;padding:.8rem;margin-bottom:.6rem}
+.tech-sub .h{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.2rem;font-size:.82rem}
+.tech-sub .h .author{color:#c8e0c8;font-weight:500}
+.tech-sub .h .tech{color:#d0b860;font-weight:500}
+.tech-sub .h .time{font-size:.68rem;color:#7a7498}
+.tech-sub .b{font-size:.78rem;color:#b0acc8;margin:.2rem 0;white-space:pre-wrap;line-height:1.5}
+.tech-sub .i{display:flex;gap:.25rem;flex-wrap:wrap;margin:.3rem 0}
+.tech-sub .i img{width:72px;height:72px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid rgba(72,64,112,.2)}
+.tech-sub .i img:hover{border-color:rgba(100,80,180,.35)}
+.tech-sub .a{display:flex;gap:.4rem;margin-top:.3rem}
+.uc{position:fixed;z-index:999;background:rgba(40,34,62,.96);border:1px solid #585090;border-radius:12px;padding:1.2rem;min-width:150px;text-align:center;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none}
+.uc.s{opacity:1;visibility:visible}
+.uc .p{width:80px;height:80px;border-radius:50%;margin:0 auto .6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#e4e0f0;overflow:hidden;background:rgba(75,65,130,.55)}
+.uc .p img{width:100%;height:100%;object-fit:cover}
+.uc .n{font-size:.9rem;color:#e0dcf0;font-weight:600}
+.uc .r{font-size:.7rem;color:#8a84a8;margin-top:.15rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <h1>⚙️ 管理后台</h1>
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <span id="adminUser" style="font-size:.8rem;color:#c8e0c8"></span>
+      <a href="/forum">← 论坛</a>
+      <a href="/">← 首页</a>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('users',this)">👥 用户管理</button>
+    <button class="tab" onclick="switchTab('posts',this)">📋 帖子管理</button>
+    <button class="tab" onclick="switchTab('tech',this)">🔬 科技审核</button>
+  </div>
+
+  <div id="usersPanel">
+    <div class="card">
+      <h2>👥 用户列表</h2>
+      <div id="userList"><div class="empty">加载中...</div></div>
+    </div>
+  </div>
+
+  <div id="postsPanel" style="display:none">
+    <div class="card">
+      <h2>📋 帖子管理</h2>
+      <div id="adminPostList"><div class="empty">加载中...</div></div>
+    </div>
+  </div>
+
+  <div id="techPanel" style="display:none">
+    <div class="card">
+      <h2>🔬 科技树审核</h2>
+      <div id="techSubList"><div class="empty">加载中...</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="msgModal">
+  <div class="modal-box">
+    <h3>📨 发送消息</h3>
+    <div class="error" id="msgError"></div>
+    <p id="msgTarget" style="font-size:.85rem;color:#888;margin-bottom:.5rem"></p>
+    <textarea id="msgContent" placeholder="输入消息内容..."></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let token = localStorage.getItem('token') || '';
+let currentUser = null;
+let msgUserId = null;
+
+async function checkAdmin() {
+  if (!token) { window.location.href = '/'; return; }
+  try {
+    const r = await fetch('/api/me', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    if (!d.ok || !d.user || d.user.role !== '腐竹') { window.location.href = '/'; return; }
+    currentUser = d.user;
+    document.getElementById('adminUser').innerHTML = '<span data-u="' + d.user.username + '" data-r="' + (d.user.role || '用户') + '" style="cursor:pointer">👤 ' + d.user.username + '</span>';
+    loadUsers();
+  } catch(e) { window.location.href = '/'; }
+}
+
+async function loadUsers() {
+  try {
+    const r = await fetch('/api/admin/users', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    if (!d.ok || !d.users) { document.getElementById('userList').innerHTML = '<div class="empty">无权访问</div>'; return; }
+    if (d.users.length === 0) { document.getElementById('userList').innerHTML = '<div class="empty">暂无用户</div>'; return; }
+    document.getElementById('userList').innerHTML =
+      '<table><thead><tr><th>ID</th><th>用户名</th><th>MC ID</th><th>权限</th><th>注册时间</th><th>操作</th></tr></thead><tbody>' +
+      d.users.map(u =>
+        '<tr>' +
+          '<td>' + u.id + '</td>' +
+          '<td>' + u.username + '</td>' +
+          '<td>' + (u.minecraft_id || '-') + '</td>' +
+          '<td class="' + (u.role === '腐竹' ? 'user-admin' : '') + '">' + (u.role === '腐竹' ? '👑 腐竹' : '用户') + '</td>' +
+          '<td>' + u.created_at + '</td>' +
+          '<td><span class="action-link" onclick="showMessageForm(' + u.id + ',\'' + u.username + '\')">📨 发消息</span></td>' +
+        '</tr>'
+      ).join('') + '</tbody></table>';
+  } catch(e) { document.getElementById('userList').innerHTML = '<div class="empty">加载失败</div>'; }
+}
+
+async function loadAdminPosts() {
+  try {
+    const r = await fetch('/api/admin/posts', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    if (!d.ok || !d.posts) { document.getElementById('adminPostList').innerHTML = '<div class="empty">无权访问</div>'; return; }
+    if (d.posts.length === 0) { document.getElementById('adminPostList').innerHTML = '<div class="empty">暂无帖子</div>'; return; }
+    document.getElementById('adminPostList').innerHTML =
+      '<table><thead><tr><th>ID</th><th>标题</th><th>作者</th><th>分类</th><th>回复</th><th>时间</th><th>操作</th></tr></thead><tbody>' +
+      d.posts.map(p =>
+        '<tr>' +
+          '<td>' + p.id + '</td>' +
+          '<td>' + (p.is_pinned ? '📌 ' : '') + p.title + '</td>' +
+          '<td>' + p.author_name + '</td>' +
+          '<td>' + p.category + '</td>' +
+          '<td>' + p.reply_count + '</td>' +
+          '<td>' + p.created_at + '</td>' +
+          '<td>' +
+            '<span class="action-link" onclick="togglePinAdmin(' + p.id + ')">' + (p.is_pinned ? '取消置顶' : '置顶') + '</span>' +
+            ' <span class="action-link" style="color:#ff7a7a" onclick="deletePostAdmin(' + p.id + ')">删除</span>' +
+          '</td>' +
+        '</tr>'
+      ).join('') + '</tbody></table>';
+  } catch(e) { document.getElementById('adminPostList').innerHTML = '<div class="empty">加载失败</div>'; }
+}
+
+function showMessageForm(userId, username) {
+  msgUserId = userId;
+  document.getElementById('msgTarget').textContent = '发送给：' + username;
+  document.getElementById('msgContent').value = '';
+  document.getElementById('msgError').style.display = 'none';
+  document.getElementById('msgModal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('msgModal').classList.remove('show'); }
+document.getElementById('msgModal').onclick = function(e) { if (e.target === this) closeModal(); };
+
+async function sendMessage() {
+  const content = document.getElementById('msgContent').value.trim();
+  const err = document.getElementById('msgError');
+  if (!content) { err.textContent = '消息不能为空'; err.style.display = 'block'; return; }
+  try {
+    const r = await fetch('/api/admin/message', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({user_id: msgUserId, content})});
+    const d = await r.json();
+    if (d.ok) { closeModal(); alert('消息已发送'); }
+    else { err.textContent = d.error; err.style.display = 'block'; }
+  } catch(e) { err.textContent = '网络错误'; err.style.display = 'block'; }
+}
+
+async function togglePinAdmin(postId) {
+  try {
+    const r = await fetch('/api/forum/pin', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({post_id:postId})});
+    if ((await r.json()).ok) loadAdminPosts();
+  } catch(e) {}
+}
+
+async function deletePostAdmin(postId) {
+  if (!confirm('确定要删除这篇帖子吗？')) return;
+  try {
+    const r = await fetch('/api/forum/delete', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({post_id:postId})});
+    if ((await r.json()).ok) loadAdminPosts();
+    else alert('删除失败');
+  } catch(e) { alert('网络错误'); }
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('usersPanel').style.display = name === 'users' ? 'block' : 'none';
+  document.getElementById('postsPanel').style.display = name === 'posts' ? 'block' : 'none';
+  document.getElementById('techPanel').style.display = name === 'tech' ? 'block' : 'none';
+  if (name === 'posts') loadAdminPosts();
+  if (name === 'tech') loadTechSubmissions();
+}
+
+async function loadTechSubmissions() {
+  try {
+    const r = await fetch('/api/tech/pending', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    const el = document.getElementById('techSubList');
+    if (!d.ok || !d.submissions) { el.innerHTML = '<div class="empty">无权访问</div>'; return; }
+    if (d.submissions.length === 0) { el.innerHTML = '<div class="empty">🎉 暂无待审核的提交</div>'; return; }
+    el.innerHTML = d.submissions.map(s => {
+      const imgs = s.images && s.images.length > 0
+        ? '<div class="i">' + s.images.map(u => '<img src="' + u + '" onclick="window.open(this.src)">').join('') + '</div>' : '';
+      return '<div class="tech-sub">' +
+        '<div class="h"><span class="author">' + esc(s.username) + '</span>提交了 <span class="tech">' + esc(s.tech_key) + '</span><span class="time">' + s.created_at + '</span></div>' +
+        (s.description ? '<div class="b">' + esc(s.description) + '</div>' : '') +
+        imgs +
+        '<div class="a"><button class="btn btn-success btn-sm" onclick="reviewTechSub(' + s.id + ',\'approved\')">✅ 通过</button><button class="btn btn-danger btn-sm" onclick="reviewTechSub(' + s.id + ',\'rejected\')">❌ 拒绝</button></div>' +
+      '</div>';
+    }).join('');
+  } catch(e) { document.getElementById('techSubList').innerHTML = '<div class="empty">加载失败</div>'; }
+}
+
+async function reviewTechSub(id, status) {
+  try {
+    const r = await fetch('/api/tech/review', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({id, status})});
+    if ((await r.json()).ok) loadTechSubmissions();
+  } catch(e) {}
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+checkAdmin();
+(function(){var c,t;document.addEventListener('mouseover',function(e){var a=e.target.closest('[data-u]');if(!a||a.dataset.t)return;var u=a.dataset.u;a.dataset.t=setTimeout(function(){if(!c){c=document.createElement('div');c.className='uc';c.innerHTML='<div class="p"></div><div class="n"></div><div class="r"></div>';document.body.appendChild(c)}var r=a.getBoundingClientRect(),p=c.querySelector('.p'),n=c.querySelector('.n'),l=c.querySelector('.r');p.innerHTML='';var i=a.querySelector('img');if(i)p.appendChild(i.cloneNode());else p.textContent=u.charAt(0).toUpperCase();n.textContent=u;l.textContent=a.dataset.r||'用户';c.classList.add('s');var x=r.left+r.width/2-75,y=r.top-c.offsetHeight-10;if(y<10)y=r.bottom+10;c.style.left=Math.max(5,x)+'px';c.style.top=y+'px'},1000)}),document.addEventListener('mouseout',function(e){var a=e.target.closest('[data-u]');if(!a)return;if(a.dataset.t){clearTimeout(parseInt(a.dataset.t));delete a.dataset.t}if(c)c.classList.remove('s')})})();
+document.addEventListener('click',function(e){var a=e.target.closest('[data-u]');if(a&&!a.closest('.uc')){e.stopPropagation();if(a.dataset.u)window.location.href='/user?username='+encodeURIComponent(a.dataset.u)}});
+</script>
+</body>
+</html>

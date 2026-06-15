@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户 - NewWorld</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#2f2a48;color:#e4e0f0;min-height:100vh;background-image:radial-gradient(ellipse at 40% 15%,rgba(120,100,200,.12) 0%,transparent 55%),radial-gradient(ellipse at 60% 85%,rgba(90,110,190,.08) 0%,transparent 50%);padding:2rem}
+.container{max-width:600px;margin:0 auto}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
+.top-bar a{color:#b0a8d0;text-decoration:none;font-size:.9rem;padding:.3rem .8rem;border:1px solid #4e4880;border-radius:6px;transition:.2s}
+.top-bar a:hover{background:rgba(90,70,160,.15)}
+.card{background:rgba(42,36,64,.6);border:1px solid #484070;border-radius:14px;padding:1.8rem;backdrop-filter:blur(10px);box-shadow:0 2px 24px rgba(0,0,0,.18)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:.65rem 0;border-bottom:1px solid #3e3860;font-size:.85rem}
+.row:last-child{border-bottom:none}
+.row .label{color:#8a84a8}
+.row .value{color:#d0cce4}
+.row .value .highlight{color:#c8e0c8}
+.row .value .gold{color:#d0a870}
+#loading{text-align:center;color:#888;padding:2rem;font-size:.9rem}
+#error{text-align:center;color:#d07a7a;padding:2rem;font-size:.9rem;display:none}
+.uc{position:fixed;z-index:999;background:rgba(40,34,62,.96);border:1px solid #585090;border-radius:12px;padding:1.2rem;min-width:150px;text-align:center;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none}
+.uc.s{opacity:1;visibility:visible}
+.uc .p{width:80px;height:80px;border-radius:50%;margin:0 auto .6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#e4e0f0;overflow:hidden;background:rgba(75,65,130,.55)}
+.uc .p img{width:100%;height:100%;object-fit:cover}
+.uc .n{font-size:.9rem;color:#e0dcf0;font-weight:600}
+.uc .r{font-size:.7rem;color:#8a84a8;margin-top:.15rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <span id="userDisplay" style="color:#c8e0c8;font-size:1.4rem;font-weight:600"></span>
+    <a href="javascript:history.back()">← 返回</a>
+  </div>
+
+  <div class="card">
+    <div id="loading">加载中...</div>
+    <div id="error">用户不存在</div>
+    <div id="profileContent" style="display:none">
+      <div style="text-align:center;margin-bottom:1rem">
+        <div id="avatarPreview" style="width:110px;height:110px;border-radius:50%;background:rgba(75,65,130,.55);margin:0 auto .5rem;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:600;color:#e4e0f0;overflow:hidden;border:2px solid #585090"></div>
+      </div>
+      <div class="row">
+        <span class="label">用户名</span>
+        <span class="value"><span class="highlight" id="pUsername">-</span></span>
+      </div>
+      <div class="row">
+        <span class="label">玩家ID (Minecraft)</span>
+        <span class="value"><span class="highlight" id="pMinecraftId">-</span></span>
+      </div>
+      <div class="row">
+        <span class="label">权限</span>
+        <span class="value"><span class="gold" id="pRole">用户</span></span>
+      </div>
+      <div class="row">
+        <span class="label">注册时间</span>
+        <span class="value" id="pCreatedAt">-</span>
+      </div>
+      <div class="row">
+        <span class="label">论坛帖子</span>
+        <span class="value" id="pPosts">-</span>
+      </div>
+      <div class="row">
+        <span class="label">论坛回复</span>
+        <span class="value" id="pReplies">-</span>
+      </div>
+      <div class="row">
+        <span class="label">在线时长</span>
+        <span class="value" id="pPlaytime">-</span>
+      </div>
+      <div class="row" style="border-bottom:none">
+        <span class="label">成就徽章</span>
+        <span class="value" id="pBadges">无</span>
+      </div>
+      <div id="badgeRow" style="display:none;padding:.5rem 0;border-top:1px solid #3e3860;margin-top:.5rem;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function $(id) { return document.getElementById(id); }
+
+function fmtTime(seconds) {
+  if (!seconds || seconds < 60) return '< 1 分钟';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return h + ' 小时 ' + m + ' 分钟';
+  return m + ' 分钟';
+}
+
+async function loadUser() {
+  const params = new URLSearchParams(window.location.search);
+  const username = params.get('username');
+  if (!username) { $('loading').style.display = 'none'; $('error').style.display = 'block'; $('error').textContent = '缺少用户名参数'; return; }
+  try {
+    const r = await fetch('/api/user?username=' + encodeURIComponent(username));
+    const d = await r.json();
+    if (!d.ok || !d.user) { $('loading').style.display = 'none'; $('error').style.display = 'block'; return; }
+    const u = d.user;
+    $('userDisplay').textContent = u.username;
+    $('pUsername').textContent = u.username;
+    $('pMinecraftId').textContent = u.minecraft_id || '未绑定';
+    const roleMap = {'user': '用户', 'admin': '管理员'};
+    $('pRole').textContent = roleMap[u.role] || u.role;
+    $('pCreatedAt').textContent = u.created_at || '-';
+    $('pPosts').textContent = u.post_count + ' 篇';
+    $('pReplies').textContent = u.reply_count + ' 条';
+    $('pPlaytime').textContent = fmtTime(u.playtime_seconds);
+    const av = $('avatarPreview');
+    const avatarUrl = u.avatar;
+    if (avatarUrl) {
+      av.style.background = 'none';
+      av.innerHTML = '<img src="' + avatarUrl + '" style="width:100%;height:100%;object-fit:cover">';
+    } else {
+      av.style.background = 'rgba(75,65,130,.55)';
+      av.innerHTML = u.username.charAt(0).toUpperCase();
+    }
+    loadBadges(username);
+    $('loading').style.display = 'none';
+    $('profileContent').style.display = 'block';
+  } catch(e) { $('loading').style.display = 'none'; $('error').style.display = 'block'; $('error').textContent = '加载失败'; }
+}
+
+const BADGE_ICONS = {tier_中级阶段:'⚙️', tier_高级阶段:'🏭', tier_尖端科技:'🚂', tier_终极目标:'💎'};
+const BADGE_NAMES = {tier_中级阶段:'中级工程师', tier_高级阶段:'高级工程师', tier_尖端科技:'科技先锋', tier_终极目标:'终极大师'};
+
+async function loadBadges(username) {
+  try {
+    const r = await fetch('/api/badges?username=' + encodeURIComponent(username));
+    const d = await r.json();
+    if (!d.ok || !d.badges || d.badges.length === 0) return;
+    const row = document.getElementById('badgeRow');
+    row.style.display = 'block';
+    document.getElementById('pBadges').textContent = d.badges.length + ' 个';
+    row.innerHTML = d.badges.map(b => {
+      const icon = BADGE_ICONS[b.key] || '🏅';
+      const name = BADGE_NAMES[b.key] || b.key;
+      return '<span title="' + name + ' · ' + b.earned_at + '" style="display:inline-block;margin:.2rem;padding:.35rem .7rem;border-radius:999px;background:rgba(130,90,40,.25);border:1px solid rgba(180,140,50,.3);font-size:.85rem;cursor:default;transition:.2s">' + icon + ' ' + name + '</span>';
+    }).join('');
+  } catch(e) {}
+}
+
+loadUser();
+</script>
+</body>
+</html>

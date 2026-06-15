@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科技树 - NewWorld</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#2f2a48;color:#e4e0f0;min-height:100vh;background-image:radial-gradient(ellipse at 40% 15%,rgba(120,100,200,.12) 0%,transparent 55%),radial-gradient(ellipse at 60% 85%,rgba(90,110,190,.08) 0%,transparent 50%);padding:1.5rem}
+.container{max-width:860px;margin:0 auto}
+.top-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1.2rem;padding:.8rem 1.2rem;background:rgba(42,36,64,.55);border:1px solid rgba(72,64,112,.3);border-radius:14px;backdrop-filter:blur(10px)}
+.top-bar h1{font-size:1.3rem;color:#e4e0f0;letter-spacing:1px}
+.top-bar a{color:#b0a8d0;text-decoration:none;font-size:.8rem;padding:.25rem .65rem;border:1px solid rgba(72,64,112,.3);border-radius:8px;transition:.2s}
+.top-bar a:hover{background:rgba(90,70,160,.15);color:#ddd8f0}
+.subtitle{text-align:center;font-size:.8rem;color:#9a94b8;margin-bottom:1.5rem;line-height:1.6}
+/* tiers */
+.tier{margin-bottom:2.2rem}
+.tier-header{display:flex;align-items:center;gap:.7rem;margin-bottom:.8rem;padding-bottom:.4rem}
+.tier-icon{font-size:1.5rem}
+.tier-info{flex:1}
+.tier-title{font-size:1.05rem;font-weight:700;letter-spacing:.5px}
+.tier-desc{font-size:.73rem;color:#7777aa;margin-top:.05rem}
+.tier-progress{width:90px;height:4px;background:rgba(80,60,120,.3);border-radius:4px;overflow:hidden;flex-shrink:0}
+.tier-progress-bar{height:100%;border-radius:4px;transition:width .6s ease}
+.tier-count{font-size:.72rem;color:#7777aa;flex-shrink:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:.5rem}
+.card{background:rgba(38,32,60,.5);border:1px solid rgba(72,64,112,.3);border-radius:10px;padding:.8rem .85rem;transition:all .25s ease;cursor:pointer;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(100,80,180,.3),transparent);opacity:0;transition:opacity .3s}
+.card:hover::before{opacity:1}
+.card:hover{border-color:rgba(100,80,180,.35);transform:translateY(-2px);box-shadow:0 4px 16px rgba(50,40,100,.15)}
+.card .icon{font-size:1.25rem;display:block;margin-bottom:.15rem}
+.card .name{font-size:.85rem;color:#d0cce8;font-weight:500;margin-bottom:.1rem;transition:color .3s}
+.card .desc{font-size:.68rem;color:#8a84a8;line-height:1.5}
+.card .tags{margin-top:.25rem;display:flex;gap:.2rem;flex-wrap:wrap}
+.card .tag{font-size:.55rem;padding:.05rem .3rem;border-radius:999px;background:rgba(50,38,90,.2);border:1px solid rgba(72,64,112,.25);color:#9a94b8}
+.card-done{background:rgba(50,38,18,.4)!important;border-color:rgba(180,140,40,.3)!important}
+.card-done .name{color:#d0b050!important}
+.card-done:hover{border-color:rgba(180,140,40,.4)!important;box-shadow:0 4px 16px rgba(160,120,30,.12)!important}
+.card-done::before{background:linear-gradient(90deg,transparent,rgba(180,140,40,.35),transparent)!important}
+.card-done .icon{filter:drop-shadow(0 0 3px rgba(180,140,40,.2))}
+.card-pending{border-color:rgba(200,168,48,.35)!important;background:rgba(60,48,20,.3)!important}
+.card-pending::before{background:linear-gradient(90deg,transparent,rgba(200,168,48,.35),transparent)!important}
+.card-pending:hover{border-color:rgba(200,168,48,.5)!important}
+.card-approved{border-color:rgba(100,200,120,.35)!important;background:rgba(30,55,30,.25)!important}
+.card-approved::before{background:linear-gradient(90deg,transparent,rgba(100,200,120,.3),transparent)!important}
+.card-approved:hover{border-color:rgba(100,200,120,.5)!important}
+.card-rejected{opacity:.55}
+.card-rejected:hover{opacity:.8}
+.card .status-badge{position:absolute;top:6px;right:6px;font-size:.55rem;padding:.08rem .3rem;border-radius:4px;font-weight:600;line-height:1.2}
+.card-pending .status-badge{background:rgba(200,168,48,.25);color:#d0b848;border:1px solid rgba(200,168,48,.3)}
+.card-approved .status-badge{background:rgba(80,180,100,.2);color:#80d090;border:1px solid rgba(80,180,100,.25)}
+.card-rejected .status-badge{background:rgba(180,60,60,.2);color:#c87070;border:1px solid rgba(180,60,60,.25)}
+.tag-create{color:#c8a830!important;border-color:rgba(180,140,40,.25)!important;background:rgba(180,140,40,.06)!important}
+.tag-mech{color:#80c090!important;border-color:rgba(100,180,120,.22)!important;background:rgba(100,180,120,.05)!important}
+.tag-redstone{color:#70a8d0!important;border-color:rgba(80,150,200,.22)!important;background:rgba(80,150,200,.05)!important}
+.tag-farm{color:#c88080!important;border-color:rgba(200,100,100,.22)!important;background:rgba(200,100,100,.05)!important}
+.tag-combat{color:#c8b860!important;border-color:rgba(190,170,70,.22)!important;background:rgba(190,170,70,.05)!important}
+.tag-magic{color:#a890d0!important;border-color:rgba(140,100,200,.22)!important;background:rgba(140,100,200,.05)!important}
+.overlay{display:none;position:fixed;inset:0;background:rgba(10,8,25,.7);z-index:100;padding:1rem;overflow-y:auto;backdrop-filter:blur(6px)}
+.overlay.show{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(15px);opacity:0}to{transform:translateY(0);opacity:1}}
+.overlay-content{max-width:560px;margin:1rem auto;background:#2f2a48;border:1px solid rgba(72,64,112,.35);border-radius:14px;padding:1.4rem;box-shadow:0 8px 32px rgba(0,0,0,.35);animation:slideUp .25s ease}
+.overlay-header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:.7rem}
+.overlay-header .close{font-size:1.2rem;cursor:pointer;color:#7a7498;background:none;border:none;padding:0;line-height:1;transition:color .2s}
+.overlay-header .close:hover{color:#b0a8d0}
+.tech-icon{font-size:1.7rem;display:block;margin-bottom:.1rem}
+.tech-name{font-size:1.05rem;color:#d0b860;font-weight:600}
+.tech-desc{font-size:.75rem;color:#8a84a8;margin:.1rem 0 .35rem}
+.tech-tier-badge{display:inline-block;font-size:.6rem;padding:.08rem .4rem;border-radius:999px;background:rgba(50,38,90,.2);border:1px solid rgba(72,64,112,.3);color:#9a94b8}
+.section-title{font-size:.78rem;color:#b8b4d8;font-weight:500;margin:.6rem 0 .35rem;display:flex;align-items:center;gap:.3rem}
+.sub-item{background:rgba(34,28,56,.35);border:1px solid rgba(72,64,112,.2);border-radius:8px;padding:.6rem .8rem;margin-bottom:.4rem;transition:border-color .2s}
+.sub-item:hover{border-color:rgba(90,70,160,.25)}
+.sub-item .head{display:flex;align-items:center;gap:.4rem;margin-bottom:.12rem;font-size:.72rem;flex-wrap:wrap}
+.sub-item .head .name{color:#80c090;font-weight:500}
+.sub-item .head .time{font-size:.6rem;color:#7a7498}
+.sub-item .body{font-size:.72rem;color:#b0acc8;line-height:1.6;margin-bottom:.2rem;white-space:pre-wrap}
+.sub-item .imgs{display:flex;gap:.25rem;flex-wrap:wrap;margin-bottom:.2rem}
+.sub-item .imgs img{width:64px;height:64px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid rgba(72,64,112,.2);transition:border-color .2s}
+.sub-item .imgs img:hover{border-color:rgba(100,80,180,.35)}
+.sub-item .review-actions{display:flex;gap:.3rem;margin-top:.3rem}
+.status-pending{color:#c8a830;font-weight:500;font-size:.68rem}
+.status-approved{color:#80c090;font-weight:500;font-size:.68rem}
+.status-rejected{color:#c87070;font-weight:500;font-size:.68rem}
+.submit-box{background:rgba(34,28,56,.35);border:1px solid rgba(72,64,112,.2);border-radius:8px;padding:.8rem;margin-top:.2rem}
+.submit-box textarea{width:100%;min-height:60px;padding:.4rem .55rem;border:1px solid rgba(72,64,112,.25);border-radius:8px;background:rgba(26,22,44,.5);color:#e0dcf0;font-size:.78rem;outline:none;resize:vertical;margin-bottom:.4rem}
+.submit-box textarea:focus{border-color:rgba(100,80,180,.35)}
+.submit-box .row{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.4rem}
+.submit-box .img-grid{display:flex;gap:.25rem;flex-wrap:wrap;margin-bottom:.4rem}
+.submit-box .img-grid img{width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid rgba(72,64,112,.2)}
+.btn{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .8rem;border-radius:8px;font-size:.75rem;cursor:pointer;border:none;font-weight:500;transition:all .2s}
+.btn-primary{background:rgba(75,65,130,.55);color:#e4e0f0}
+.btn-primary:hover{background:rgba(85,75,150,.65)}
+.btn-gold{background:rgba(160,130,40,.5);color:#e4dcf0}
+.btn-gold:hover{background:rgba(170,140,50,.6)}
+.btn-success{background:rgba(50,110,60,.5);color:#d0e0d0}
+.btn-success:hover{background:rgba(60,130,70,.6)}
+.btn-danger{background:rgba(130,50,50,.5);color:#e0d0d0}
+.btn-danger:hover{background:rgba(150,60,60,.6)}
+.btn-ghost{background:transparent;border:1px solid rgba(72,64,112,.3);color:#b0a8d0}
+.btn-ghost:hover{background:rgba(90,70,160,.15)}
+.btn-sm{padding:.2rem .5rem;font-size:.68rem}
+.upload-btn{display:inline-flex;align-items:center;gap:.2rem;padding:.2rem .5rem;border-radius:6px;font-size:.68rem;cursor:pointer;border:1px solid rgba(72,64,112,.3);background:transparent;color:#b0a8d0;transition:.2s}
+.upload-btn:hover{background:rgba(90,70,160,.15)}
+.upload-btn input{display:none}
+.error{color:#c87070;font-size:.72rem;margin-bottom:.3rem;display:none}
+.empty{text-align:center;color:#8a84a8;font-size:.72rem;padding:.35rem}
+@media(max-width:480px){.cards{grid-template-columns:1fr 1fr}.card{padding:.65rem}.card .icon{font-size:1.15rem}.card .name{font-size:.8rem}}
+.uc{position:fixed;z-index:999;background:rgba(40,34,62,.96);border:1px solid #585090;border-radius:12px;padding:1.2rem;min-width:150px;text-align:center;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none}
+.uc.s{opacity:1;visibility:visible}
+.uc .p{width:80px;height:80px;border-radius:50%;margin:0 auto .6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#e4e0f0;overflow:hidden;background:rgba(75,65,130,.55)}
+.uc .p img{width:100%;height:100%;object-fit:cover}
+.uc .n{font-size:.9rem;color:#e0dcf0;font-weight:600}
+.uc .r{font-size:.7rem;color:#8a84a8;margin-top:.15rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <h1>🌳 科技树</h1>
+    <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+      <span id="techUser" style="font-size:.78rem;color:#c8e0c8"></span>
+      <a id="techAdminLink" href="/admin" style="background:rgba(110,50,50,.4);border-color:#6a4a4a;color:#d8c8c8;font-weight:500;font-size:.78rem;padding:.25rem .65rem;border-radius:8px">⚙️ 审核</a>
+      <a href="/leaderboard">🏆</a>
+      <a href="/forum">💬</a>
+      <a href="/">🏠</a>
+    </div>
+  </div>
+  <div class="subtitle">从零开始建设工业帝国 · 点击卡片提交你的成果</div>
+
+  <div class="tier" id="tier-0">
+    <div class="tier-header">
+      <span class="tier-icon">🌱</span>
+      <div class="tier-info"><div class="tier-title" style="color:#f7a820">初级阶段</div><div class="tier-desc">生存起步 · 已通关 ✅</div></div>
+      <div class="tier-progress"><div class="tier-progress-bar" style="width:100%;background:linear-gradient(90deg,#f7a820,#ffe040)"></div></div>
+      <span class="tier-count" style="color:#f7a820">5/5</span>
+    </div>
+    <div class="cards">
+      <div class="card card-done" data-tech="手动农场"><span class="icon">🌾</span><div class="name">手动农场</div><div class="desc">小麦、胡萝卜、土豆等基础农作物，骨粉催熟</div><div class="tags"><span class="tag tag-farm">农场</span></div></div>
+      <div class="card card-done" data-tech="手动树场"><span class="icon">🌲</span><div class="name">手动树场</div><div class="desc">手砍树木，骨粉催树苗，获取基础木材</div><div class="tags"><span class="tag tag-farm">农场</span></div></div>
+      <div class="card card-done" data-tech="简易矿洞"><span class="icon">⛏️</span><div class="name">简易矿洞</div><div class="desc">鱼骨矿道，获取铁、煤、红石等基础资源</div><div class="tags"><span class="tag tag-mech">资源</span></div></div>
+      <div class="card card-done" data-tech="简易牧场"><span class="icon">🐑</span><div class="name">简易牧场</div><div class="desc">牛羊猪鸡圈养，获取食物和基础材料</div><div class="tags"><span class="tag tag-farm">农场</span></div></div>
+      <div class="card card-done" data-tech="基础基地"><span class="icon">🏠</span><div class="name">基础基地</div><div class="desc">临时住所、工作台、熔炉、储物系统</div><div class="tags"><span class="tag tag-mech">建筑</span></div></div>
+    </div>
+  </div>
+
+  <div class="tier" id="tier-1">
+    <div class="tier-header">
+      <span class="tier-icon">⚙️</span>
+      <div class="tier-info"><div class="tier-title" style="color:#6ab8ff">中级阶段</div><div class="tier-desc">初步自动化 · 红石机械</div></div>
+      <div class="tier-progress"><div class="tier-progress-bar" id="prog-1" style="width:0%;background:linear-gradient(90deg,#6ab8ff,#4a8add)"></div></div>
+      <span class="tier-count" id="count-1">0/10</span>
+    </div>
+    <div class="cards">
+      <div class="card" data-tech="刷石机"><span class="icon">🪨</span><div class="name">刷石机</div><div class="desc">岩浆+水生成圆石，配合TNT或急迫挖掘</div><div class="tags"><span class="tag tag-redstone">红石</span></div></div>
+      <div class="card" data-tech="刷铁机"><span class="icon">🤖</span><div class="name">刷铁机</div><div class="desc">铁傀儡生成+岩浆处死，稳定铁锭来源</div><div class="tags"><span class="tag tag-mech">资源</span></div></div>
+      <div class="card" data-tech="自动熔炉组"><span class="icon">🔥</span><div class="name">自动熔炉组</div><div class="desc">多炉并联+漏斗链，批量冶炼自动化</div><div class="tags"><span class="tag tag-redstone">红石</span></div></div>
+      <div class="card" data-tech="甘蔗竹子机"><span class="icon">🎋</span><div class="name">甘蔗/竹子机</div><div class="desc">观察者检测生长，活塞自动破坏收集</div><div class="tags"><span class="tag tag-redstone">红石</span></div></div>
+      <div class="card" data-tech="简易袭击塔"><span class="icon">🪣</span><div class="name">简易袭击塔</div><div class="desc">利用袭击机制获取绿宝石、附魔书</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="基础应力网"><span class="icon">⚡</span><div class="name">基础应力网</div><div class="desc">Create水车/风车提供应力，传动杆连接</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="自动压印"><span class="icon">🔄</span><div class="name">自动压印</div><div class="desc">Create动力辊压机，自动压板/线/管</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="自动粉碎"><span class="icon">⚪</span><div class="name">自动粉碎</div><div class="desc">Create动力磨石/粉碎轮，矿物倍增</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="自动农场"><span class="icon">🚜</span><div class="name">自动农场</div><div class="desc">Create机械犁+收割机，全自动耕种</div><div class="tags"><span class="tag tag-create">Create</span><span class="tag tag-farm">农场</span></div></div>
+      <div class="card" data-tech="自动屠宰"><span class="icon">🥩</span><div class="name">自动屠宰</div><div class="desc">Create动力锯+传送带，动物自动处理</div><div class="tags"><span class="tag tag-create">Create</span><span class="tag tag-farm">农场</span></div></div>
+    </div>
+  </div>
+
+  <div class="tier" id="tier-2">
+    <div class="tier-header">
+      <span class="tier-icon">🏭</span>
+      <div class="tier-info"><div class="tier-title" style="color:#f7a820">高级阶段</div><div class="tier-desc">工业化 · 全面自动化</div></div>
+      <div class="tier-progress"><div class="tier-progress-bar" id="prog-2" style="width:0%;background:linear-gradient(90deg,#f7a820,#f7d040)"></div></div>
+      <span class="tier-count" id="count-2">0/14</span>
+    </div>
+    <div class="cards">
+      <div class="card" data-tech="全自动树场"><span class="icon">🌴</span><div class="name">全自动树场</div><div class="desc">Create机械手+锯木，全种类原木循环</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="无限刷石机"><span class="icon">🪨</span><div class="name">无限刷石机</div><div class="desc">Create鼓风机+熔岩，多石质方块生成</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="高效率刷铁机"><span class="icon">🧲</span><div class="name">高效率刷铁机</div><div class="desc">优化村庄+处死效率，时产数千铁</div><div class="tags"><span class="tag tag-mech">资源</span></div></div>
+      <div class="card" data-tech="猪灵交易所"><span class="icon">🐷</span><div class="name">猪灵交易所</div><div class="desc">下界金矿→猪灵以物易物，大量掉落</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="守卫者农场"><span class="icon">🐟</span><div class="name">守卫者农场</div><div class="desc">海底神殿改造，海晶石+鱼+经验</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="凋零骷髅农场"><span class="icon">💀</span><div class="name">凋零骷髅农场</div><div class="desc">下界要塞刷怪，骨头+煤炭+头颅</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="袭击塔V2"><span class="icon">🔮</span><div class="name">袭击塔 V2</div><div class="desc">高效率不祥袭击，绿宝石+图腾+烟花</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="自动冶炼阵列"><span class="icon">🔥</span><div class="name">自动冶炼阵列</div><div class="desc">Create鼓风机烟熏/熔炼批量处理</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="动力合成"><span class="icon">🧩</span><div class="name">动力合成</div><div class="desc">Create动力合成器，自动合成复杂品</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="自动农夫乐事"><span class="icon">🥘</span><div class="name">自动农夫乐事</div><div class="desc">Create+农夫乐事，全自动烹饪产线</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="烟花产线"><span class="icon">🎆</span><div class="name">烟花产线</div><div class="desc">袭击塔+染色，全自动烟花火箭</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="附魔室"><span class="icon">🪄</span><div class="name">附魔室</div><div class="desc">书架布局+经验农场，稳定高级附魔</div><div class="tags"><span class="tag tag-magic">附魔</span></div></div>
+      <div class="card" data-tech="史莱姆农场"><span class="icon">🟢</span><div class="name">史莱姆农场</div><div class="desc">史莱姆区块查找+刷怪平台，粘液球</div><div class="tags"><span class="tag tag-mech">资源</span></div></div>
+      <div class="card" data-tech="永久基地"><span class="icon">🏡</span><div class="name">永久基地</div><div class="desc">仓库/工坊/农场区/防御一体化建设</div><div class="tags"><span class="tag tag-mech">建筑</span></div></div>
+    </div>
+  </div>
+
+  <div class="tier" id="tier-3">
+    <div class="tier-header">
+      <span class="tier-icon">🚂</span>
+      <div class="tier-info"><div class="tier-title" style="color:#ff8a8a">尖端科技</div><div class="tier-desc">跨维度物流 · 超大规模</div></div>
+      <div class="tier-progress"><div class="tier-progress-bar" id="prog-3" style="width:0%;background:linear-gradient(90deg,#ff8a8a,#ff6a6a)"></div></div>
+      <span class="tier-count" id="count-3">0/11</span>
+    </div>
+    <div class="cards">
+      <div class="card" data-tech="列车系统"><span class="icon">🚂</span><div class="name">列车系统</div><div class="desc">Create列车网络，跨基地物资运输</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="物流仓储"><span class="icon">📦</span><div class="name">物流仓储</div><div class="desc">存储+传送带+漏斗矿车，全自动分类</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="弹药生产线"><span class="icon">🔫</span><div class="name">弹药生产线</div><div class="desc">Tacz子弹/炮弹全自动生产链</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="区块加载器"><span class="icon">🏗️</span><div class="name">区块加载器</div><div class="desc">Chunky预生成+加载，农场持续运转</div><div class="tags"><span class="tag tag-mech">资源</span></div></div>
+      <div class="card" data-tech="超级应力网"><span class="icon">⚡</span><div class="name">超级应力网</div><div class="desc">蒸汽引擎/风力阵列，全基地应力供应</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="村民交易所"><span class="icon">🧬</span><div class="name">村民交易所</div><div class="desc">村民繁殖+职业分类，全自动交易</div><div class="tags"><span class="tag tag-redstone">红石</span></div></div>
+      <div class="card" data-tech="物品分类系统"><span class="icon">🗂️</span><div class="name">物品分类系统</div><div class="desc">漏斗+分类器，全物品自动归类</div><div class="tags"><span class="tag tag-redstone">红石</span></div></div>
+      <div class="card" data-tech="经验熔炉"><span class="icon">✨</span><div class="name">经验熔炉</div><div class="desc">高效经验转换，附魔与修复无忧</div><div class="tags"><span class="tag tag-mech">资源</span></div></div>
+      <div class="card" data-tech="炮台防御"><span class="icon">🛡️</span><div class="name">炮台防御</div><div class="desc">Tacz防御工事+自动哨戒，守护领土</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="跨洲铁路"><span class="icon">🌍</span><div class="name">跨洲铁路</div><div class="desc">1:300地球连接各大洲据点的铁路网</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="探索装备"><span class="icon">🗺️</span><div class="name">探索装备</div><div class="desc">翱翔箱/地图/指路石，远距离探索</div><div class="tags"><span class="tag tag-mech">工具</span></div></div>
+    </div>
+  </div>
+
+  <div class="tier" id="tier-4">
+    <div class="tier-header">
+      <span class="tier-icon">💎</span>
+      <div class="tier-info"><div class="tier-title" style="color:#c8a0ff">终极目标</div><div class="tier-desc">国家建设 · 全物品收集</div></div>
+      <div class="tier-progress"><div class="tier-progress-bar" id="prog-4" style="width:0%;background:linear-gradient(90deg,#c8a0ff,#a07add)"></div></div>
+      <span class="tier-count" id="count-4">0/7</span>
+    </div>
+    <div class="cards">
+      <div class="card" data-tech="国家首都"><span class="icon">🏛️</span><div class="name">国家首都</div><div class="desc">主城/议会/交易所/公共仓库</div><div class="tags"><span class="tag tag-mech">建筑</span></div></div>
+      <div class="card" data-tech="国际合作"><span class="icon">🤝</span><div class="name">国际合作</div><div class="desc">外交/贸易/军事同盟，跨服合作</div><div class="tags"><span class="tag tag-mech">社交</span></div></div>
+      <div class="card" data-tech="军事力量"><span class="icon">⚔️</span><div class="name">军事力量</div><div class="desc">Tacz武器库+防御工事，领土守护</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="全物品收集"><span class="icon">📈</span><div class="name">全物品收集</div><div class="desc">所有农场+产线覆盖，全物品自动化</div><div class="tags"><span class="tag tag-create">Create</span></div></div>
+      <div class="card" data-tech="末影农场"><span class="icon">👁️</span><div class="name">末影农场</div><div class="desc">末地平台+末影人刷怪，大量经验+珍珠</div><div class="tags"><span class="tag tag-combat">战斗</span></div></div>
+      <div class="card" data-tech="信标网络"><span class="icon">💡</span><div class="name">信标网络</div><div class="desc">全基地信标覆盖，速度/力量/急迫加成</div><div class="tags"><span class="tag tag-mech">建筑</span></div></div>
+      <div class="card" data-tech="基建狂魔"><span class="icon">🎉</span><div class="name">基建狂魔</div><div class="desc">1:300地球完整城市群+交通网</div><div class="tags"><span class="tag tag-mech">建筑</span></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="techOverlay">
+  <div class="overlay-content" id="techDetail"></div>
+</div>
+
+<script>
+let token = localStorage.getItem('token') || '';
+let currentUser = null;
+
+async function checkAuth() {
+  if (!token) return;
+  try {
+    const r = await fetch('/api/me', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    if (d.ok && d.user) {
+      currentUser = d.user;
+      document.getElementById('techUser').innerHTML = '<span data-u="' + d.user.username + '" data-r="' + (d.user.role || '用户') + '" style="cursor:pointer">' + (d.user.avatar ? '<img src="' + d.user.avatar + '" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:3px;object-fit:cover">' : '👤 ') + '</span>' + d.user.username;
+      if (d.user.role === '腐竹') document.getElementById('techAdminLink').style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+document.querySelectorAll('.card:not(.card-done)').forEach(card => {
+  card.addEventListener('click', () => {
+    const tech = card.dataset.tech;
+    if (tech) openTech(tech);
+  });
+});
+
+async function loadProgress() {
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch('/api/tech/submissions'),
+      token ? fetch('/api/tech/mine', {headers:{'Authorization':'Bearer ' + token}}) : Promise.resolve(null)
+    ]);
+    const d = await r1.json();
+    if (!d.ok || !d.submissions) return;
+
+    const approved = {};
+    d.submissions.forEach(s => { if (s.status === 'approved') approved[s.tech_key] = true; });
+
+    let mySubs = null;
+    if (r2) {
+      const d2 = await r2.json();
+      if (d2.ok) mySubs = d2.submissions || [];
+    }
+
+    const myTechStatus = {};
+    if (mySubs) {
+      mySubs.forEach(s => { myTechStatus[s.tech_key] = s.status; });
+    }
+
+    document.querySelectorAll('.cards').forEach(cards => {
+      const all = cards.querySelectorAll('.card:not(.card-done)');
+      let done = 0;
+      all.forEach(c => {
+        const tech = c.dataset.tech;
+        if (approved[tech]) {
+          done++;
+          c.classList.add('card-approved');
+          c.classList.remove('card-pending', 'card-rejected');
+          addStatusBadge(c, '已通过');
+        } else if (myTechStatus[tech] === 'pending') {
+          c.classList.add('card-pending');
+          c.classList.remove('card-approved', 'card-rejected');
+          addStatusBadge(c, '审核中');
+        } else if (myTechStatus[tech] === 'rejected') {
+          c.classList.add('card-rejected');
+          c.classList.remove('card-pending', 'card-approved');
+          addStatusBadge(c, '未通过');
+        } else {
+          c.classList.remove('card-pending', 'card-approved', 'card-rejected');
+          removeStatusBadge(c);
+        }
+      });
+      const tier = cards.closest('.tier');
+      const bar = tier.querySelector('.tier-progress-bar');
+      const count = tier.querySelector('.tier-count');
+      if (all.length > 0) {
+        const pct = Math.round(done / all.length * 100);
+        if (bar) bar.style.width = pct + '%';
+        if (count) count.textContent = done + '/' + all.length;
+      }
+    });
+  } catch(e) {}
+}
+
+function addStatusBadge(card, label) {
+  let b = card.querySelector('.status-badge');
+  if (!b) {
+    b = document.createElement('span');
+    b.className = 'status-badge';
+    card.appendChild(b);
+  }
+  b.textContent = label;
+}
+
+function removeStatusBadge(card) {
+  const b = card.querySelector('.status-badge');
+  if (b) b.remove();
+}
+
+function openTech(techKey) {
+  const overlay = document.getElementById('techOverlay');
+  const detail = document.getElementById('techDetail');
+  overlay.classList.add('show');
+
+  const card = document.querySelector('.card[data-tech="' + techKey + '"]');
+  const icon = card ? card.querySelector('.icon').textContent : '🔧';
+  const desc = card ? card.querySelector('.desc').textContent : '';
+  const tierEl = card ? card.closest('.tier') : null;
+  const tierName = tierEl ? tierEl.querySelector('.tier-title').textContent.replace('✅','').trim() : '';
+
+  let html =
+    '<div class="overlay-header">' +
+      '<div><span class="tech-icon">' + icon + '</span><div class="tech-name">' + techKey + '</div><div class="tech-desc">' + desc + '</div><span class="tech-tier-badge">' + tierName + '</span></div>' +
+      '<button class="close" onclick="closeTech()">✕</button>' +
+    '</div>' +
+    '<div class="section-title">📋 提交记录</div><div id="techSubList"><div class="empty">加载中...</div></div>';
+
+  if (token) {
+    html += '<div class="section-title">✏️ 提交你的成果</div>' +
+      '<div class="submit-box">' +
+        '<textarea id="techDesc" placeholder="描述建造方案、材料清单、注意事项..."></textarea>' +
+        '<div class="row">' +
+          '<label class="upload-btn">📷 上传图片<input type="file" accept="image/*" onchange="uploadTechImage(this.files[0])"></label>' +
+          '<span id="techUploadStatus" style="font-size:.72rem;color:#888"></span>' +
+        '</div>' +
+        '<div class="img-grid" id="techImagePreview"></div>' +
+        '<div class="error" id="techError"></div>' +
+        '<button class="btn btn-gold" onclick="submitTech(\'' + techKey + '\')">提交审核</button>' +
+      '</div>';
+  } else {
+    html += '<div style="text-align:center;color:#7a7498;font-size:.75rem;margin-top:.7rem;padding:.5rem;border:1px dashed #3e3860;border-radius:8px">🔒 登录后提交成果</div>';
+  }
+
+  detail.innerHTML = html;
+  loadTechSubmissions(techKey);
+}
+
+async function loadTechSubmissions(techKey) {
+  try {
+    const r = await fetch('/api/tech/submissions?tech_key=' + encodeURIComponent(techKey));
+    const d = await r.json();
+    const list = document.getElementById('techSubList');
+    if (!d.ok || !d.submissions || d.submissions.length === 0) {
+      list.innerHTML = '<div class="empty">暂无提交，来做第一个！</div>';
+      return;
+    }
+    list.innerHTML = d.submissions.map(s => {
+      const labels = {pending:'⏳ 待审核', approved:'✅ 已通过', rejected:'❌ 未通过'};
+      const imgs = s.images && s.images.length > 0
+        ? '<div class="imgs">' + s.images.map(u => '<img src="' + u + '" onclick="window.open(this.src)">').join('') + '</div>' : '';
+      return '<div class="sub-item">' +
+        '<div class="head"><span class="name">' + s.username + '</span><span class="time">' + s.created_at + '</span><span class="status-' + s.status + '">' + (labels[s.status] || s.status) + '</span></div>' +
+        (s.description ? '<div class="body">' + esc(s.description) + '</div>' : '') +
+        imgs +
+        (currentUser && currentUser.role === '腐竹' && s.status === 'pending' ?
+          '<div class="review-actions"><button class="btn btn-success btn-sm" onclick="reviewTech(' + s.id + ',\'approved\')">✅ 通过</button><button class="btn btn-danger btn-sm" onclick="reviewTech(' + s.id + ',\'rejected\')">❌ 拒绝</button></div>' : '') +
+      '</div>';
+    }).join('');
+  } catch(e) { document.getElementById('techSubList').innerHTML = '<div class="empty">加载失败</div>'; }
+}
+
+let techImages = [];
+
+function uploadTechImage(file) {
+  if (!file || !token) return;
+  const st = document.getElementById('techUploadStatus');
+  st.textContent = '上传中...';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    fetch('/api/upload', {method:'POST', headers:{'Authorization':'Bearer ' + token, 'X-Filename': file.name}, body: e.target.result})
+      .then(r => r.json()).then(d => {
+        if (d.ok) {
+          techImages.push(d.url);
+          const p = document.getElementById('techImagePreview');
+          const img = document.createElement('img');
+          img.src = d.url;
+          img.onclick = function() { window.open(this.src); };
+          p.appendChild(img);
+          st.textContent = '✅ 已添加 (' + techImages.length + ')';
+          setTimeout(() => st.textContent = '', 2000);
+        } else { st.textContent = '❌ ' + (d.error || '失败'); }
+      }).catch(() => st.textContent = '❌ 网络错误');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function submitTech(techKey) {
+  const desc = document.getElementById('techDesc').value.trim();
+  const err = document.getElementById('techError');
+  if (!desc && techImages.length === 0) { err.textContent = '请填写说明或上传图片'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  try {
+    const r = await fetch('/api/tech/submit', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({tech_key: techKey, description: desc, images: techImages})});
+    const d = await r.json();
+    if (d.ok) {
+      techImages = []; document.getElementById('techImagePreview').innerHTML = '';
+      document.getElementById('techDesc').value = '';
+      document.getElementById('techUploadStatus').textContent = '✅ 提交成功，等待审核';
+      loadTechSubmissions(techKey); loadProgress();
+    } else { err.textContent = d.error; err.style.display = 'block'; }
+  } catch(e) { err.textContent = '网络错误'; err.style.display = 'block'; }
+}
+
+async function reviewTech(id, status) {
+  try {
+    const r = await fetch('/api/tech/review', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({id, status})});
+    if ((await r.json()).ok) {
+      const n = document.querySelector('.tech-name');
+      if (n) loadTechSubmissions(n.textContent);
+      loadProgress();
+    }
+  } catch(e) {}
+}
+
+function closeTech() { document.getElementById('techOverlay').classList.remove('show'); techImages = []; }
+document.getElementById('techOverlay').onclick = function(e) { if (e.target === this) closeTech(); };
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+checkAuth();
+loadProgress();
+(function(){var c,t;document.addEventListener('mouseover',function(e){var a=e.target.closest('[data-u]');if(!a||a.dataset.t)return;var u=a.dataset.u;a.dataset.t=setTimeout(function(){if(!c){c=document.createElement('div');c.className='uc';c.innerHTML='<div class="p"></div><div class="n"></div><div class="r"></div>';document.body.appendChild(c)}var r=a.getBoundingClientRect(),p=c.querySelector('.p'),n=c.querySelector('.n'),l=c.querySelector('.r');p.innerHTML='';var i=a.querySelector('img');if(i)p.appendChild(i.cloneNode());else p.textContent=u.charAt(0).toUpperCase();n.textContent=u;l.textContent=a.dataset.r||'用户';c.classList.add('s');var x=r.left+r.width/2-75,y=r.top-c.offsetHeight-10;if(y<10)y=r.bottom+10;c.style.left=Math.max(5,x)+'px';c.style.top=y+'px'},1000)}),document.addEventListener('mouseout',function(e){var a=e.target.closest('[data-u]');if(!a)return;if(a.dataset.t){clearTimeout(parseInt(a.dataset.t));delete a.dataset.t}if(c)c.classList.remove('s')})})();
+document.addEventListener('click',function(e){var a=e.target.closest('[data-u]');if(a&&!a.closest('.uc')){e.stopPropagation();if(a.dataset.u)window.location.href='/user?username='+encodeURIComponent(a.dataset.u)}});
+</script>
+</body>
+</html>

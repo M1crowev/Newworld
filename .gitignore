@@ -1,0 +1,6 @@
+auth.db
+uploads/*
+!uploads/.gitkeep
+*.log
+mods/*.jar
+mods/*.zip

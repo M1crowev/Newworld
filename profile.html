@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的 - NewWorld</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#2f2a48;color:#e4e0f0;min-height:100vh;background-image:radial-gradient(ellipse at 40% 15%,rgba(120,100,200,.12) 0%,transparent 55%),radial-gradient(ellipse at 60% 85%,rgba(90,110,190,.08) 0%,transparent 50%);padding:2rem}
+.container{max-width:600px;margin:0 auto}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
+.top-bar a{color:#b0a8d0;text-decoration:none;font-size:.9rem;padding:.3rem .8rem;border:1px solid #4e4880;border-radius:6px;transition:.2s}
+.top-bar a:hover{background:rgba(90,70,160,.15)}
+.card{background:rgba(42,36,64,.6);border:1px solid #484070;border-radius:14px;padding:1.8rem;backdrop-filter:blur(10px);box-shadow:0 2px 24px rgba(0,0,0,.18)}
+.card h2{font-size:1.1rem;margin-bottom:1.1rem;text-align:center;color:#c0b8d8;font-weight:400;letter-spacing:2px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:.65rem 0;border-bottom:1px solid #3e3860;font-size:.85rem}
+.row:last-child{border-bottom:none}
+.row .label{color:#8a84a8}
+.row .value{color:#d0cce4}
+.row .value .highlight{color:#c8e0c8}
+.row .value .gold{color:#d0a870}
+.btn{display:inline-block;padding:.35rem .85rem;border-radius:8px;font-size:.8rem;cursor:pointer;border:none;font-weight:500;text-decoration:none}
+.btn-primary{background:rgba(75,65,130,.55);color:#e4e0f0}
+.btn-primary:hover{background:rgba(85,75,150,.65)}
+.btn-warn{background:rgba(80,65,40,.5);color:#d0c8a0}
+.btn-warn:hover{background:rgba(90,75,50,.6)}
+input[type=password],input[type=text]{width:100%;padding:.45rem .65rem;margin-bottom:.45rem;border:1px solid #484070;border-radius:8px;background:#282448;color:#e0dcf0;font-size:.85rem;outline:none}
+input:focus{border-color:#6a6298}
+.pw-wrap{position:relative;margin-bottom:.45rem}
+.pw-wrap input{margin-bottom:0;padding-right:2.5rem}
+.pw-toggle{position:absolute;top:50%;right:10px;transform:translateY(-50%);cursor:pointer;font-size:1rem;color:#7a7498;background:none;border:none;padding:4px;line-height:1;z-index:2}
+.pw-toggle:hover{color:#b0a8d0}
+#extra{display:none;margin-top:.8rem;padding-top:.8rem;border-top:1px solid #3e3860}
+.error{color:#d07a7a;font-size:.78rem;margin-bottom:.35rem;display:none;text-align:center}
+.success{color:#c8e0c8;text-align:center;padding:.5rem;font-size:.85rem}
+.msg-item{padding:.45rem 0;border-bottom:1px solid #363058;font-size:.82rem;color:#c8c4dc}
+.msg-item:last-child{border-bottom:none}
+.msg-time{font-size:.68rem;color:#7a7498;margin-top:.2rem}
+.btn-ghost{background:transparent;border:1px solid #4e4880;color:#b0a8d0;padding:.3rem .8rem;border-radius:8px;cursor:pointer;font-size:.78rem}
+.btn-ghost:hover{background:rgba(90,70,160,.15)}
+.upload-btn{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .7rem;border-radius:6px;font-size:.78rem;cursor:pointer;border:1px solid #484070;background:transparent;color:#b0a8d0;transition:.2s}
+.upload-btn:hover{background:rgba(90,70,160,.15)}
+.uc{position:fixed;z-index:999;background:rgba(40,34,62,.96);border:1px solid #585090;border-radius:12px;padding:1.2rem;min-width:150px;text-align:center;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none}
+.uc.s{opacity:1;visibility:visible}
+.uc .p{width:80px;height:80px;border-radius:50%;margin:0 auto .6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#e4e0f0;overflow:hidden;background:rgba(75,65,130,.55)}
+.uc .p img{width:100%;height:100%;object-fit:cover}
+.uc .n{font-size:.9rem;color:#e0dcf0;font-weight:600}
+.uc .r{font-size:.7rem;color:#8a84a8;margin-top:.15rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <span id="userDisplay" style="color:#c8e0c8;font-size:1.4rem;font-weight:600"></span>
+    <a href="/">← 返回首页</a>
+  </div>
+
+  <div class="card">
+    <h2>✦ 我的 ✦</h2>
+
+    <div id="loading" style="text-align:center;color:#888;padding:1rem">加载中...</div>
+
+    <div id="profileContent" style="display:none">
+      <div style="text-align:center;margin-bottom:1rem">
+        <div id="avatarPreview" style="width:110px;height:110px;border-radius:50%;background:rgba(75,65,130,.55);margin:0 auto .5rem;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:600;color:#e4e0f0;overflow:hidden;border:2px solid #585090"></div>
+        <label class="upload-btn" style="display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .7rem;border-radius:6px;font-size:.8rem;cursor:pointer;border:1px solid #5a4a8a;background:transparent;color:#b8a8ff;transition:.2s">📷 上传头像<input type="file" accept="image/*" onchange="uploadAvatar(this.files[0])" style="display:none"></label>
+        <span id="avatarStatus" style="font-size:.75rem;color:#888;display:block;margin-top:.3rem"></span>
+      </div>
+      <div class="row">
+        <span class="label">用户名</span>
+        <span class="value"><span class="highlight" id="pUsername">-</span></span>
+      </div>
+      <div class="row">
+        <span class="label">玩家ID (Minecraft)</span>
+        <span class="value"><span class="highlight" id="pMinecraftId">未绑定</span> <a onclick="showBindMc()" style="cursor:pointer;color:#6ab8ff;font-size:.8rem;text-decoration:underline">绑定</a></span>
+      </div>
+      <div class="row">
+        <span class="label">权限</span>
+        <span class="value"><span class="gold" id="pRole">用户</span></span>
+      </div>
+      <div class="row">
+        <span class="label">注册时间</span>
+        <span class="value" id="pCreatedAt">-</span>
+      </div>
+      <div class="row">
+        <span class="label">密码</span>
+        <span class="value"><a onclick="showChangePw()" style="cursor:pointer;color:#6ab8ff;text-decoration:underline;font-size:.85rem">修改密码</a></span>
+      </div>
+      <div class="row">
+        <span class="label">新信息</span>
+        <span class="value"><span id="pUnread" style="color:#ff8a8a">0</span> <a onclick="showMessages()" style="cursor:pointer;color:#6ab8ff;font-size:.8rem;text-decoration:underline">查看</a></span>
+      </div>
+      <div class="row">
+        <span class="label">我的帖子</span>
+        <span class="value"><span id="pPostCount" style="color:#888;font-size:.8rem">0</span> <a onclick="showMyPosts()" style="cursor:pointer;color:#6ab8ff;font-size:.8rem;text-decoration:underline">查看</a></span>
+      </div>
+      <div class="row">
+        <span class="label">收藏的帖子</span>
+        <span class="value"><a onclick="showBookmarks()" style="cursor:pointer;color:#6ab8ff;font-size:.8rem;text-decoration:underline">查看</a></span>
+      </div>
+    </div>
+
+    <div id="extra"></div>
+  </div>
+</div>
+
+<script>
+let token = localStorage.getItem('token') || '';
+if (!token) { window.location.href = '/'; }
+let userPosts = [];
+
+function $(id) { return document.getElementById(id); }
+
+async function loadProfile() {
+  try {
+    const r = await fetch('/api/me', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    if (!d.ok || !d.user) { localStorage.removeItem('token'); window.location.href = '/'; return; }
+    const u = d.user;
+    $('userDisplay').textContent = u.username;
+    $('pUsername').textContent = u.username;
+    $('pMinecraftId').textContent = u.minecraft_id || '未绑定';
+    const roleMap = {'user': '用户', 'admin': '管理员'};
+    $('pRole').textContent = roleMap[u.role] || u.role;
+    $('pCreatedAt').textContent = u.created_at || '-';
+    $('pUnread').textContent = u.unread || 0;
+    userPosts = u.posts || [];
+    $('pPostCount').textContent = userPosts.length + ' 篇';
+    updateAvatarPreview(u.avatar, u.username);
+    $('loading').style.display = 'none';
+    $('profileContent').style.display = 'block';
+  } catch(e) { $('loading').textContent = '加载失败'; }
+}
+
+function updateAvatarPreview(avatarUrl, username) {
+    const el = document.getElementById('avatarPreview');
+    el.setAttribute('data-u', username);
+    if (avatarUrl) {
+      el.style.background = 'none';
+      el.innerHTML = '<img src="' + avatarUrl + '" style="width:100%;height:100%;object-fit:cover">';
+    } else {
+      el.style.background = 'rgba(75,65,130,.55)';
+      el.innerHTML = username ? username.charAt(0).toUpperCase() : '?';
+    }
+}
+
+async function uploadAvatar(file) {
+  if (!file) return;
+  const status = document.getElementById('avatarStatus');
+  status.textContent = '上传中...';
+  try {
+    const buf = await file.arrayBuffer();
+    const r = await fetch('/api/upload', {method:'POST', headers:{'Authorization':'Bearer ' + token, 'X-Filename': file.name}, body: buf});
+    const d = await r.json();
+    if (!d.ok) { status.textContent = '❌ ' + (d.error || '图片格式不支持'); return; }
+    const r2 = await fetch('/api/update_profile', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({avatar_url: d.url})});
+    const d2 = await r2.json();
+    if (d2.ok) {
+      updateAvatarPreview(d.url, null);
+      status.textContent = '✅ 头像已更新';
+      setTimeout(() => status.textContent = '', 2000);
+    } else { status.textContent = '❌ 保存失败'; }
+  } catch(e) {
+    status.textContent = '❌ 网络错误';
+  }
+}
+
+async function deletePost(postId) {
+  if (!confirm('确定要删除这篇帖子吗？')) return;
+  try {
+    const r = await fetch('/api/forum/delete', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({post_id:postId})});
+    const d = await r.json();
+    if (d.ok) { loadProfile(); }
+    else { alert(d.error); }
+  } catch(e) { alert('删除失败'); }
+}
+
+function showMyPosts() {
+  const extra = $('extra');
+  extra.style.display = 'block';
+  if (userPosts.length === 0) {
+    extra.innerHTML = '<div style="text-align:center;color:#888;padding:.5rem;font-size:.85rem">暂无帖子</div><button class="btn btn-ghost" onclick="cancelExtra()" style="margin-top:.5rem">关闭</button>';
+    return;
+  }
+  extra.innerHTML = '<div style="font-size:.85rem;color:#ddd8ff;margin-bottom:.6rem">我的帖子 (' + userPosts.length + ')</div>' +
+    userPosts.map(p =>
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #2a1a4a;font-size:.85rem;gap:.5rem">' +
+        '<a href="/forum" style="color:#e8e4ff;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.title + '</a>' +
+        '<span style="color:#666;font-size:.7rem;white-space:nowrap">💬 ' + p.reply_count + '</span>' +
+        '<span style="color:#666;font-size:.7rem;white-space:nowrap">' + p.created_at + '</span>' +
+        '<span onclick="deletePost(' + p.id + ')" style="cursor:pointer;color:#ff7a7a;font-size:.75rem;text-decoration:underline;white-space:nowrap">删除</span>' +
+      '</div>'
+    ).join('') +
+    '<button class="btn btn-ghost" onclick="cancelExtra()" style="margin-top:.5rem">关闭</button>';
+}
+
+function showBindMc() {
+  const extra = $('extra');
+  extra.style.display = 'block';
+  extra.innerHTML = `
+    <div style="font-size:.85rem;color:#ddd8ff;margin-bottom:.6rem">绑定 Minecraft 游戏ID</div>
+    <input id="mcId" type="text" placeholder="输入你的游戏ID">
+    <div id="bindError" class="error"></div>
+    <button class="btn btn-primary" onclick="bindMc()">确认绑定</button>
+  `;
+}
+
+async function bindMc() {
+  const mcId = $('mcId').value.trim();
+  const err = $('bindError');
+  if (!mcId) { err.textContent = '请输入游戏ID'; err.style.display = 'block'; return; }
+  try {
+    const r = await fetch('/api/update_profile', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({minecraft_id: mcId})});
+    const d = await r.json();
+    if (d.ok) {
+      $('pMinecraftId').textContent = mcId;
+      $('extra').innerHTML = '<div class="success">绑定成功</div>';
+    } else { err.textContent = d.error; err.style.display = 'block'; }
+  } catch(e) { err.textContent = '网络错误'; err.style.display = 'block'; }
+}
+
+function showChangePw() {
+  const extra = $('extra');
+  extra.style.display = 'block';
+  extra.innerHTML = `
+    <div style="font-size:.85rem;color:#ddd8ff;margin-bottom:.6rem">修改密码</div>
+    <div class="pw-wrap">
+      <input id="oldPw" type="password" placeholder="原密码">
+      <span class="pw-toggle" onclick="togglePw()">👁</span>
+    </div>
+    <input id="newPw" type="password" placeholder="新密码">
+    <div id="pwError" class="error"></div>
+    <button class="btn btn-primary" onclick="changePw()">确认修改</button>
+    <button class="btn btn-warn" onclick="cancelExtra()" style="margin-left:.5rem">取消</button>
+  `;
+}
+
+function togglePw() {
+  const el = $('oldPw');
+  const btn = document.querySelector('.pw-toggle');
+  if (el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
+  else { el.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function changePw() {
+  const oldPw = $('oldPw').value;
+  const newPw = $('newPw').value;
+  const err = $('pwError');
+  if (!oldPw || !newPw) { err.textContent = '请填写原密码和新密码'; err.style.display = 'block'; return; }
+  try {
+    const r = await fetch('/api/change_password', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({old_password:oldPw, new_password:newPw})});
+    const d = await r.json();
+    if (d.ok) { $('extra').innerHTML = '<div class="success">密码修改成功</div>'; }
+    else { err.textContent = d.error; err.style.display = 'block'; }
+  } catch(e) { err.textContent = '网络错误'; err.style.display = 'block'; }
+}
+
+async function showMessages() {
+  const extra = $('extra');
+  extra.style.display = 'block';
+  extra.innerHTML = '<div style="color:#888;text-align:center;padding:.5rem">加载中...</div>';
+  try {
+    const r = await fetch('/api/messages', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    if (!d.ok) { extra.innerHTML = '<div style="color:#ff7a7a;text-align:center;padding:.5rem">加载失败</div>'; return; }
+    if (d.messages.length === 0) {
+      extra.innerHTML = '<div style="color:#888;text-align:center;padding:.5rem">暂无信息</div>';
+      $('pUnread').textContent = '0';
+      return;
+    }
+    $('pUnread').textContent = '0';
+    extra.innerHTML = '<div style="font-size:.85rem;color:#ddd8ff;margin-bottom:.6rem">消息列表</div>' +
+      d.messages.map(m => '<div class="msg-item">' + m.content + '<div class="msg-time">' + m.created_at + '</div></div>').join('') +
+      '<button class="btn btn-warn" onclick="cancelExtra()" style="margin-top:.5rem">关闭</button>';
+  } catch(e) { extra.innerHTML = '<div style="color:#ff7a7a;text-align:center;padding:.5rem">网络错误</div>'; }
+}
+
+async function showBookmarks() {
+  const extra = $('extra');
+  extra.style.display = 'block';
+  extra.innerHTML = '<div style="color:#888;text-align:center;padding:.5rem">加载中...</div>';
+  try {
+    const r = await fetch('/api/forum/bookmarks', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    if (!d.ok || !d.posts) { extra.innerHTML = '<div style="color:#ff7a7a;text-align:center;padding:.5rem">加载失败</div>'; return; }
+    if (d.posts.length === 0) {
+      extra.innerHTML = '<div style="color:#888;text-align:center;padding:.5rem">暂无收藏</div><button class="btn btn-ghost" onclick="cancelExtra()" style="margin-top:.5rem">关闭</button>';
+      return;
+    }
+    extra.innerHTML = '<div style="font-size:.85rem;color:#ddd8ff;margin-bottom:.6rem">收藏的帖子 (' + d.posts.length + ')</div>' +
+      d.posts.map(p =>
+        '<div style="display:flex;align-items:center;gap:.5rem;padding:.5rem 0;border-bottom:1px solid #2a1a4a;font-size:.85rem">' +
+          '<a href="/forum" style="color:#e8e4ff;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.title + '</a>' +
+          '<span style="color:#666;font-size:.7rem;white-space:nowrap">💬 ' + p.reply_count + '</span>' +
+          '<span style="color:#666;font-size:.7rem;white-space:nowrap">' + p.category + '</span>' +
+        '</div>'
+      ).join('') +
+      '<button class="btn btn-ghost" onclick="cancelExtra()" style="margin-top:.5rem">关闭</button>';
+  } catch(e) { extra.innerHTML = '<div style="color:#ff7a7a;text-align:center;padding:.5rem">网络错误</div>'; }
+}
+
+function cancelExtra() { $('extra').style.display = 'none'; }
+
+loadProfile();
+(function(){var c,t;document.addEventListener('mouseover',function(e){var a=e.target.closest('[data-u]');if(!a||a.dataset.t)return;var u=a.dataset.u;a.dataset.t=setTimeout(function(){if(!c){c=document.createElement('div');c.className='uc';c.innerHTML='<div class="p"></div><div class="n"></div><div class="r"></div>';document.body.appendChild(c)}var r=a.getBoundingClientRect(),p=c.querySelector('.p'),n=c.querySelector('.n'),l=c.querySelector('.r');p.innerHTML='';var i=a.querySelector('img');if(i)p.appendChild(i.cloneNode());else p.textContent=u.charAt(0).toUpperCase();n.textContent=u;l.textContent=a.dataset.r||'用户';c.classList.add('s');var x=r.left+r.width/2-75,y=r.top-c.offsetHeight-10;if(y<10)y=r.bottom+10;c.style.left=Math.max(5,x)+'px';c.style.top=y+'px'},1000)}),document.addEventListener('mouseout',function(e){var a=e.target.closest('[data-u]');if(!a)return;if(a.dataset.t){clearTimeout(parseInt(a.dataset.t));delete a.dataset.t}if(c)c.classList.remove('s')})})();
+document.addEventListener('click',function(e){var a=e.target.closest('[data-u]');if(a&&!a.closest('.uc')){e.stopPropagation();if(a.dataset.u)window.location.href='/user?username='+encodeURIComponent(a.dataset.u)}});
+</script>
+</body>
+</html>
