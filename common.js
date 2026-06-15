@@ -180,6 +180,28 @@ function closeLightbox() {
   if (lb) lb.classList.remove('show');
 }
 
+/* === Unread Message Badge === */
+function initUnreadBadge() {
+  if (!localStorage.getItem('token')) return;
+  checkUnread();
+  setInterval(checkUnread, 30000);
+}
+
+async function checkUnread() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+  try {
+    const r = await fetch('/api/me', {headers:{'Authorization':'Bearer ' + token}});
+    const d = await r.json();
+    if (!d.ok || !d.user) return;
+    document.querySelectorAll('.unread-badge').forEach(el => {
+      const n = d.user.unread || 0;
+      el.textContent = n > 99 ? '99+' : n;
+      el.style.display = n > 0 ? 'inline' : 'none';
+    });
+  } catch(e) {}
+}
+
 /* === Nav User Display === */
 function renderNavUser(username, role, avatar) {
   const display = document.getElementById('authDisplay');

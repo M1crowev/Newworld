@@ -104,13 +104,14 @@ body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;backgroun
 .uc .n{font-size:.9rem;color:#e0dcf0;font-weight:600}
 .uc .r{font-size:.7rem;color:#8a84a8;margin-top:.15rem}
 </style>
+<script src="/common.js"></script>
 </head>
 <body>
 <div class="container">
   <div class="top-bar">
     <h1>📢 玩家论坛</h1>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-      <span id="forumUser" style="font-size:.8rem;color:#c8e0c8"></span>
+      <span id="forumUser" style="font-size:.8rem;color:#c8e0c8"></span><span class="unread-badge" style="display:none;background:#d04040;color:#fff;border-radius:999px;padding:1px 6px;font-size:.65rem;font-weight:600;vertical-align:super;margin-left:2px">0</span>
       <button class="btn btn-gold" onclick="showNewPost()">📝 发帖</button>
       <a id="adminLink" href="/admin" style="display:none;background:rgba(120,50,50,.4);border-color:#6a4a4a;color:#d8c8c8;font-weight:500;padding:.3rem .8rem;border-radius:6px">⚙️ 管理</a>
       <span class="theme-switcher-wrap"></span>
@@ -304,7 +305,7 @@ async function viewPost(id) {
           : '<div style="text-align:center;color:#666;font-size:.85rem;padding:.5rem">暂无回复</div>') +
         '</div>' +
         (token
-          ? '<div class="reply-form"><textarea id="replyContent" placeholder="写下你的回复..."></textarea><div class="row"><span class="hint">文明交流，友善发言</span><div><label class="upload-btn" style="margin-right:.5rem">📷 图<input type="file" accept="image/*" onchange="uploadImage(this.files[0],\'replyContent\')"></label><button class="btn btn-primary btn-sm" onclick="submitReply(' + p.id + ')">发送回复</button></div></div></div>'
+          ? '<div class="reply-form"><textarea id="replyContent" placeholder="写下你的回复..." oninput="saveReplyDraft(' + p.id + ')">' + esc(localStorage.getItem('nw-reply-draft-' + p.id) || '') + '</textarea><div class="row"><span class="hint">文明交流，友善发言</span><div><label class="upload-btn" style="margin-right:.5rem">📷 图<input type="file" accept="image/*" onchange="uploadImage(this.files[0],\'replyContent\')"></label><button class="btn btn-primary btn-sm" onclick="submitReply(' + p.id + ')">发送回复</button></div></div></div>'
           : '<div style="text-align:center;color:#8a84a8;font-size:.75rem;margin-top:.8rem;padding:.7rem;border:1px dashed #3e3860;border-radius:8px">🔒 请登录后参与讨论</div>') +
       '</div>';
   } catch(e) {}
@@ -328,7 +329,33 @@ function renderReply(r, user) {
 }
 
 function renderContent(text) {
-  return text.replace(/!\[(.*?)\]\((\/uploads\/[^)]+)\)/g, '<img src="$2" alt="$1" class="img-preview lightbox-trigger" onerror="this.style.display=\'none\'">');
+  if (!text) return '';
+  let h = esc(text);
+  h = h.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="lang-$1">$2</code></pre>');
+  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+  h = h.replace(/!\[(.*?)\]\((\/[^)]+)\)/g, '<img src="$2" alt="$1" class="img-preview lightbox-trigger" onerror="this.style.display=\'none\'">');
+  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#6ab8ff">$1</a>');
+  h = h.replace(/^###### (.+)$/gm, '<h6>$1</h6>');
+  h = h.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
+  h = h.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  h = h.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  h = h.replace(/^- (.+)$/gm, '<li>$1</li>');
+  h = h.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+  h = h.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  h = h.replace(/(?:^<li>.*<\/li>\n?)+/g, function(m) {
+    if (m.includes('<ul>')) return m;
+    return '<ol>' + m + '</ol>';
+  });
+  h = h.replace(/\n{2,}/g, '</p><p>');
+  h = '<p>' + h + '</p>';
+  h = h.replace(/<p><\/p>/g, '');
+  h = h.replace(/<p><\/p>/g, '');
+  return h;
 }
 
 async function togglePin(postId) {
@@ -439,21 +466,49 @@ async function saveReplyEdit(replyId) {
   } catch(e) {}
 }
 
+function saveReplyDraft(postId) {
+  const v = document.getElementById('replyContent').value;
+  if (v) localStorage.setItem('nw-reply-draft-' + postId, v);
+  else localStorage.removeItem('nw-reply-draft-' + postId);
+}
+
 async function submitReply(postId) {
   const el = document.getElementById('replyContent');
   const content = el.value.trim();
   if (!content) return;
   try {
     const r = await fetch('/api/forum/reply', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({post_id:postId, content})});
-    if ((await r.json()).ok) { viewPost(postId); loadPosts(); }
+    if ((await r.json()).ok) { localStorage.removeItem('nw-reply-draft-' + postId); viewPost(postId); loadPosts(); }
   } catch(e) {}
 }
 
 function closePost() { isEditing = false; editingReplies.clear(); document.getElementById('postOverlay').classList.remove('show'); currentViewingPostId = null; }
 document.getElementById('postOverlay').onclick = function(e) { if (e.target === this) closePost(); };
 
-function showNewPost() { if (!token) { alert('请先登录'); return; } document.getElementById('newPostOverlay').classList.add('show'); }
-function closeNewPost() { document.getElementById('newPostOverlay').classList.remove('show'); document.getElementById('postError').style.display = 'none'; }
+function showNewPost() {
+  if (!token) { alert('请先登录'); return; }
+  document.getElementById('newPostOverlay').classList.add('show');
+  const saved = localStorage.getItem('nw-draft-title');
+  const savedContent = localStorage.getItem('nw-draft-content');
+  if (saved) document.getElementById('postTitle').value = saved;
+  if (savedContent) document.getElementById('postContent').value = savedContent;
+  document.getElementById('postTitle').oninput = saveDraft;
+  document.getElementById('postContent').oninput = saveDraft;
+}
+function closeNewPost() {
+  document.getElementById('newPostOverlay').classList.remove('show');
+  document.getElementById('postError').style.display = 'none';
+}
+function saveDraft() {
+  const t = document.getElementById('postTitle').value;
+  const c = document.getElementById('postContent').value;
+  if (t || c) { localStorage.setItem('nw-draft-title', t); localStorage.setItem('nw-draft-content', c); }
+  else { localStorage.removeItem('nw-draft-title'); localStorage.removeItem('nw-draft-content'); }
+}
+function clearDraft() {
+  localStorage.removeItem('nw-draft-title');
+  localStorage.removeItem('nw-draft-content');
+}
 
 async function submitPost() {
   const category = document.getElementById('postCategory').value;
@@ -464,7 +519,7 @@ async function submitPost() {
   try {
     const r = await fetch('/api/forum/post', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + token}, body:JSON.stringify({title, content, category})});
     const d = await r.json();
-    if (d.ok) { closeNewPost(); document.getElementById('postTitle').value = ''; document.getElementById('postContent').value = ''; loadPosts(); }
+    if (d.ok) { closeNewPost(); clearDraft(); document.getElementById('postTitle').value = ''; document.getElementById('postContent').value = ''; loadPosts(); }
     else { err.textContent = d.error; err.style.display = 'block'; }
   } catch(e) { err.textContent = '网络错误'; err.style.display = 'block'; }
 }
@@ -492,10 +547,10 @@ loadPosts();
 initTheme();
 initBackTop();
 initLightbox();
+initUnreadBadge();
 (function(){var pid=localStorage.getItem('viewPost');if(pid){localStorage.removeItem('viewPost');setTimeout(function(){viewPost(parseInt(pid))},500)}})();
 (function(){var c,t;document.addEventListener('mouseover',function(e){var a=e.target.closest('[data-u]');if(!a||a.dataset.t)return;var u=a.dataset.u;a.dataset.t=setTimeout(function(){if(!c){c=document.createElement('div');c.className='uc';c.innerHTML='<div class="p"></div><div class="n"></div><div class="r"></div>';document.body.appendChild(c)}var r=a.getBoundingClientRect(),p=c.querySelector('.p'),n=c.querySelector('.n'),l=c.querySelector('.r');p.innerHTML='';var i=a.querySelector('img');if(i)p.appendChild(i.cloneNode());else p.textContent=u.charAt(0).toUpperCase();n.textContent=u;l.textContent=a.dataset.r||'用户';c.classList.add('s');var x=r.left+r.width/2-75,y=r.top-c.offsetHeight-10;if(y<10)y=r.bottom+10;c.style.left=Math.max(5,x)+'px';c.style.top=y+'px'},1000)}),document.addEventListener('mouseout',function(e){var a=e.target.closest('[data-u]');if(!a)return;if(a.dataset.t){clearTimeout(parseInt(a.dataset.t));delete a.dataset.t}if(c)c.classList.remove('s')})})();
 document.addEventListener('click',function(e){var a=e.target.closest('[data-u]');if(a&&!a.closest('.uc')){e.stopPropagation();if(a.dataset.u)window.location.href='/user?username='+encodeURIComponent(a.dataset.u)}});
 </script>
-<script src="/common.js"></script>
 </body>
 </html>

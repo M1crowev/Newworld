@@ -872,6 +872,22 @@ class Handler(BaseHTTPRequestHandler):
             json_response(self, {"ok": True, "posts": posts})
             return
 
+        if self.path == "/api/gallery":
+            upload_dir = "/var/www/newworld/uploads/"
+            images = []
+            try:
+                for f in sorted(os.listdir(upload_dir), key=lambda x: -os.path.getmtime(os.path.join(upload_dir, x))):
+                    if f == ".gitkeep" or f == "avatars":
+                        continue
+                    ext = os.path.splitext(f)[1].lower()
+                    if ext in (".png", ".jpg", ".jpeg", ".gif", ".webp"):
+                        fp = os.path.join(upload_dir, f)
+                        images.append({"url": "/uploads/" + f, "size": os.path.getsize(fp)})
+            except Exception:
+                pass
+            json_response(self, {"ok": True, "images": images})
+            return
+
         if self.path.startswith("/api/badges"):
             from urllib.parse import urlparse, parse_qs
             qs = parse_qs(urlparse(self.path).query)
